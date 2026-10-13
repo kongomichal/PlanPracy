@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Tylko zalogowani użytkownicy mogą czytać i zapisywać plan.
+    match /days/{day} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

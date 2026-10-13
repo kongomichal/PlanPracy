@@ -5,7 +5,12 @@ const Store = {
   KEY: 'muraven_plan_v2',
   data: {},
 
+  unsub: null,
+
+  col() { return firebase.firestore().collection('days'); },
+
   load() {
+    if (CLOUD_ENABLED) { this.data = {}; return; } // dane przyjdą z chmury po zalogowaniu
     try {
       const raw = localStorage.getItem(this.KEY);
       if (raw) { this.data = this.normalize(JSON.parse(raw)); this.save(); return; }
@@ -15,7 +20,37 @@ const Store = {
   },
 
   save() {
+    if (CLOUD_ENABLED) return;
     localStorage.setItem(this.KEY, JSON.stringify(this.data));
+  },
+
+  /** Nasłuchuje zmian w chmurze i woła onChange przy każdej aktualizacji. */
+  startSync(onChange) {
+    if (!CLOUD_ENABLED || this.unsub) return;
+    this.unsub = this.col().onSnapshot((snap) => {
+      const raw = {};
+      snap.forEach(doc => { raw[doc.id] = doc.data(); });
+      this.data = this.normalize(raw);
+      onChange();
+    }, (err) => { console.error(err); toast('Brak połączenia z bazą danych'); });
+  },
+
+  stopSync() {
+    if (this.unsub) this.unsub();
+    this.unsub = null;
+    if (CLOUD_ENABLED) this.data = {};
+  },
+
+  /** Zastępuje wszystkie dane w chmurze podanymi. */
+  replaceAll(newData) {
+    this.data = newData;
+    if (!CLOUD_ENABLED) return this.save();
+    const batch = firebase.firestore().batch();
+    Object.keys(newData).forEach(k => batch.set(this.col().doc(k), newData[k]));
+    this.col().get().then(snap => {
+      snap.forEach(doc => { if (!newData[doc.id]) batch.delete(doc.ref); });
+      return batch.commit();
+    }).catch(() => toast('Nie udało się zapisać w chmurze'));
   },
 
   /** Zamienia stary format (1 praca w dniu) na nowy (lista prac). */
@@ -51,6 +86,10 @@ const Store = {
   set(key, day) {
     this.data[key] = day;
     this.save();
+    if (CLOUD_ENABLED) {
+      this.col().doc(key).set(JSON.parse(JSON.stringify(day)))
+        .catch(() => toast('Nie udało się zapisać w chmurze'));
+    }
   },
 
   hasContent(day) {
@@ -64,12 +103,10 @@ const Store = {
   importJson(text) {
     const parsed = JSON.parse(text);
     if (!parsed || typeof parsed !== 'object') throw new Error('Zły format');
-    this.data = this.normalize(parsed);
-    this.save();
+    this.replaceAll(this.normalize(parsed));
   },
 
   resetToSample() {
-    this.data = buildSampleData(mondayOf());
-    this.save();
+    this.replaceAll(buildSampleData(mondayOf()));
   }
 };

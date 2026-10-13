@@ -1,4 +1,5 @@
-/* Logowanie hasłem (prosta bramka – patrz uwaga w Menu o serwerze) */
+/* Logowanie. Z Firebase: e-mail + hasło (dane chronione regułami bazy).
+   Bez konfiguracji Firebase: prosta lokalna bramka hasłem (tylko ta przeglądarka). */
 const Auth = {
   PASS_KEY: 'muraven_password_v2',
   LOGIN_KEY: 'muraven_logged_v2',
@@ -8,8 +9,10 @@ const Auth = {
   isLogged() { return localStorage.getItem(this.LOGIN_KEY) === '1'; },
 
   init() {
-    $('loginScreen').classList.toggle('hidden', this.isLogged());
+    if (CLOUD_ENABLED) return this.initCloud();
 
+    $('loginScreen').classList.toggle('hidden', this.isLogged());
+    $('loginEmailWrap').hidden = true;
     $('loginForm').addEventListener('submit', (e) => {
       e.preventDefault();
       if ($('loginPassword').value.trim() === this.password()) {
@@ -24,10 +27,36 @@ const Auth = {
     });
   },
 
+  initCloud() {
+    $('loginDefaultHint').hidden = true;
+    $('passwordBlock').hidden = true;
+    $('sharingText').textContent = 'Plan jest zapisany w chmurze i odświeża się na żywo u wszystkich zalogowanych osób.';
+
+    firebase.auth().onAuthStateChanged((user) => {
+      $('loginScreen').classList.toggle('hidden', !!user);
+      if (user) Store.startSync(() => App.render());
+      else { Store.stopSync(); App.render(); }
+    });
+
+    $('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      firebase.auth().signInWithEmailAndPassword($('loginEmail').value.trim(), $('loginPassword').value)
+        .then(() => {
+          $('loginPassword').value = '';
+          $('loginError').hidden = true;
+        })
+        .catch(() => {
+          $('loginError').textContent = 'Zły e-mail lub hasło.';
+          $('loginError').hidden = false;
+        });
+    });
+  },
+
   logout() {
+    closeModal('menuModal');
+    if (CLOUD_ENABLED) { firebase.auth().signOut(); return; }
     localStorage.removeItem(this.LOGIN_KEY);
     $('loginScreen').classList.remove('hidden');
-    closeModal('menuModal');
   },
 
   changePassword(value) {

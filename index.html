@@ -18,11 +18,15 @@
     <form id="loginForm" class="login-box">
       <h1>Muraven</h1>
       <p class="muted">Plan pracy na 2 tygodnie</p>
+      <div id="loginEmailWrap">
+        <label for="loginEmail">E-mail</label>
+        <input id="loginEmail" type="email" autocomplete="username" placeholder="Twój e-mail">
+      </div>
       <label for="loginPassword">Hasło</label>
       <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Wpisz hasło">
       <p id="loginError" class="error" hidden>Złe hasło, spróbuj jeszcze raz.</p>
       <button type="submit" class="btn primary big">Wejdź</button>
-      <p class="muted small">Domyślne hasło: <b>muraven123</b> (zmienisz je w Menu)</p>
+      <p id="loginDefaultHint" class="muted small">Domyślne hasło: <b>muraven123</b> (zmienisz je w Menu)</p>
     </form>
   </div>
 
@@ -205,7 +209,7 @@
         <button class="btn icon" data-close aria-label="Zamknij">✕</button>
       </div>
       <div class="modal-body">
-        <section class="block">
+        <section id="passwordBlock" class="block">
           <h3>Hasło</h3>
           <div class="row">
             <input id="newPassword" type="text" placeholder="Nowe hasło">
@@ -222,7 +226,7 @@
         </section>
         <section class="block">
           <h3>Udostępnianie</h3>
-          <p class="muted small">Dane są teraz zapisane tylko w tej przeglądarce. Żeby cała ekipa widziała ten sam plan, trzeba dodać serwer z bazą danych – to kolejny krok.</p>
+          <p id="sharingText" class="muted small">Dane są teraz zapisane tylko w tej przeglądarce. Żeby cała ekipa widziała ten sam plan, trzeba dodać serwer z bazą danych – to kolejny krok.</p>
         </section>
         <button id="logoutBtn" class="btn">Wyloguj</button>
       </div>
@@ -232,6 +236,10 @@
   <div id="toasts" class="toasts"></div>
 
   <!-- Skrypty: kolejność ma znaczenie -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="js/core/firebase-config.js"></script>
   <script src="js/core/utils.js"></script>
   <script src="js/core/sample-data.js"></script>
   <script src="js/core/storage.js"></script>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Muraven – prosty plan pracy na 2 tygodnie: kto, gdzie, co i jakie rzeczy zabrać.">
+  <title>Muraven – Plan pracy</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="stylesheet" href="css/jobs.css">
+</head>
+<body>
+
+  <!-- ============ LOGOWANIE ============ -->
+  <div id="loginScreen" class="login-screen">
+    <form id="loginForm" class="login-box">
+      <h1>Muraven</h1>
+      <p class="muted">Plan pracy na 2 tygodnie</p>
+      <label for="loginPassword">Hasło</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Wpisz hasło">
+      <p id="loginError" class="error" hidden>Złe hasło, spróbuj jeszcze raz.</p>
+      <button type="submit" class="btn primary big">Wejdź</button>
+      <p class="muted small">Domyślne hasło: <b>muraven123</b> (zmienisz je w Menu)</p>
+    </form>
+  </div>
+
+  <!-- ============ NAGŁÓWEK ============ -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1 class="logo">Muraven <span>plan pracy</span></h1>
+
+      <div class="range-nav">
+        <button id="prevBtn" class="btn icon" aria-label="Poprzednie 2 tygodnie">‹</button>
+        <button id="todayBtn" class="btn">Dziś</button>
+        <strong id="rangeLabel" class="range-label"></strong>
+        <button id="nextBtn" class="btn icon" aria-label="Następne 2 tygodnie">›</button>
+      </div>
+
+      <button id="menuBtn" class="btn">Menu</button>
+    </div>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="plan">Plan</button>
+      <button class="tab" data-tab="items">Rzeczy do przygotowania <span id="itemsBadge" class="count"></span></button>
+      <button class="tab" data-tab="people">Ekipa</button>
+      <button class="tab" data-tab="hours">Godziny</button>
+    </nav>
+  </header>
+
+  <main class="page">
+
+    <!-- PLAN -->
+    <section id="view-plan" class="view active">
+      <h2 class="week-title">Tydzień 1</h2>
+      <div id="week1" class="days"></div>
+      <h2 class="week-title">Tydzień 2</h2>
+      <div id="week2" class="days"></div>
+    </section>
+
+    <!-- RZECZY -->
+    <section id="view-items" class="view">
+      <div class="view-head">
+        <div>
+          <h2>Rzeczy do przygotowania</h2>
+          <p class="muted">Rusztowania, narzędzia, dokumenty i materiały z całych 2 tygodni.</p>
+        </div>
+        <div class="row">
+          <label class="check"><input type="checkbox" id="onlyTodo" checked> tylko niezałatwione</label>
+          <button id="copyItemsBtn" class="btn">Kopiuj listę</button>
+        </div>
+      </div>
+      <div id="itemsList"></div>
+    </section>
+
+    <!-- EKIPA -->
+    <section id="view-people" class="view">
+      <div class="view-head">
+        <div>
+          <h2>Ekipa</h2>
+          <p class="muted">Kto, gdzie i w jakich godzinach pracuje.</p>
+        </div>
+      </div>
+      <div id="peopleList" class="people-grid"></div>
+    </section>
+
+    <!-- GODZINY -->
+    <section id="view-hours" class="view">
+      <div class="view-head">
+        <div>
+          <h2>Podsumowanie godzin</h2>
+          <p class="muted">Kto ile godzin i gdzie pracował – do przepisania do innego programu.</p>
+        </div>
+        <div class="row wrap">
+          <select id="hoursRange" aria-label="Zakres">
+            <option value="window">Widoczne 14 dni</option>
+            <option value="all">Cały zapis (wszystkie dni)</option>
+          </select>
+          <button id="copyHoursBtn" class="btn">Kopiuj jako tekst</button>
+        </div>
+      </div>
+      <p class="muted small" style="margin-bottom:10px">Liczone są godziny rzeczywiste. Gdy ich nie wpisano, pokazany jest plan (oznaczony szarym „plan”).</p>
+      <div id="hoursList"></div>
+    </section>
+
+  </main>
+
+  <!-- ============ EDYCJA DNIA ============ -->
+  <div id="dayModal" class="modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 id="dayTitle">Dzień</h2>
+        <button class="btn icon" data-close aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="job-bar">
+        <div id="jobTabs" class="job-tabs"></div>
+        <button id="removeJobBtn" class="btn small danger">Usuń tę pracę</button>
+      </div>
+
+      <div class="modal-body">
+        <section class="block">
+          <h3>1. Gdzie i co robimy</h3>
+          <label for="fPlace">Miejsce</label>
+          <input id="fPlace" type="text" placeholder="np. Wilanów, ul. Różana 14">
+          <label for="fGoal">Cel na ten dzień</label>
+          <textarea id="fGoal" rows="2" placeholder="np. Montaż płyt GK na poddaszu"></textarea>
+        </section>
+
+        <section class="block">
+          <h3>2. Kto pracuje</h3>
+          <div id="peopleRows"></div>
+          <div class="row between">
+            <button id="addPersonBtn" class="btn small">+ Dodaj osobę</button>
+            <span class="muted small">Razem: <b id="hoursTotal">0 h</b></span>
+          </div>
+        </section>
+
+        <section class="block">
+          <h3>3. Co trzeba mieć na ten dzień</h3>
+          <div id="itemRows"></div>
+          <button id="addItemBtn" class="btn small">+ Dodaj rzecz</button>
+          <p class="muted small">Zaznacz kółko, gdy rzecz jest już zamówiona / załatwiona.</p>
+        </section>
+
+        <section class="block">
+          <h3>4. Jak poszło</h3>
+          <div id="statusPicker" class="status-picker">
+            <label><input type="radio" name="fStatus" value="plan" checked><span>Zaplanowane</span></label>
+            <label><input type="radio" name="fStatus" value="done"><span>Wykonane</span></label>
+            <label><input type="radio" name="fStatus" value="partial"><span>Częściowo</span></label>
+            <label><input type="radio" name="fStatus" value="notdone"><span>Niewykonane</span></label>
+          </div>
+          <label for="fResult">Co faktycznie zrobiono</label>
+          <textarea id="fResult" rows="2" placeholder="Wpisz po zakończeniu dnia"></textarea>
+        </section>
+
+        <section id="movePanel" class="block move-panel" hidden>
+          <h3>Przenieś tę pracę na inny dzień</h3>
+          <div class="row">
+            <select id="moveTarget"></select>
+            <button id="moveConfirmBtn" class="btn primary">Przenieś</button>
+          </div>
+          <p class="muted small">Cel, ekipa i rzeczy zostaną skopiowane na wybrany dzień.</p>
+        </section>
+      </div>
+
+      <div class="modal-foot">
+        <button id="moveToggleBtn" class="btn">Przenieś tę pracę</button>
+        <div class="row">
+          <button class="btn" data-close>Anuluj</button>
+          <button id="saveDayBtn" class="btn primary">Zapisz</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL ZLECENIA (tylko do odczytu + realne godziny) ============ -->
+  <div id="jobModal" class="modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 id="jobViewTitle">Zlecenie</h2>
+        <button class="btn icon" data-close aria-label="Zamknij">✕</button>
+      </div>
+      <div id="jobViewBody" class="modal-body"></div>
+      <div class="modal-foot">
+        <button id="jobViewEditBtn" class="btn">✏️ Edytuj zlecenie</button>
+        <div class="row">
+          <button id="jobViewFillBtn" class="btn">Wpisz godziny z planu</button>
+          <button id="jobViewSaveBtn" class="btn primary">Zapisz godziny</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Karta podglądu po najechaniu na kafelek -->
+  <div id="hoverCard" class="hover-card" hidden></div>
+
+  <!-- ============ MENU ============ -->
+  <div id="menuModal" class="modal">
+    <div class="modal-box small-box">
+      <div class="modal-head">
+        <h2>Menu</h2>
+        <button class="btn icon" data-close aria-label="Zamknij">✕</button>
+      </div>
+      <div class="modal-body">
+        <section class="block">
+          <h3>Hasło</h3>
+          <div class="row">
+            <input id="newPassword" type="text" placeholder="Nowe hasło">
+            <button id="savePasswordBtn" class="btn primary">Zapisz</button>
+          </div>
+        </section>
+        <section class="block">
+          <h3>Kopia danych</h3>
+          <div class="row wrap">
+            <button id="exportBtn" class="btn">Pobierz plik</button>
+            <label class="btn">Wczytaj plik<input id="importInput" type="file" accept=".json" hidden></label>
+            <button id="resetBtn" class="btn danger">Przykładowy plan</button>
+          </div>
+        </section>
+        <section class="block">
+          <h3>Udostępnianie</h3>
+          <p class="muted small">Dane są teraz zapisane tylko w tej przeglądarce. Żeby cała ekipa widziała ten sam plan, trzeba dodać serwer z bazą danych – to kolejny krok.</p>
+        </section>
+        <button id="logoutBtn" class="btn">Wyloguj</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="toasts"></div>
+
+  <!-- Skrypty: kolejność ma znaczenie -->
+  <script src="js/core/utils.js"></script>
+  <script src="js/core/sample-data.js"></script>
+  <script src="js/core/storage.js"></script>
+  <script src="js/features/auth.js"></script>
+  <script src="js/features/plan.js"></script>
+  <script src="js/features/day-editor.js"></script>
+  <script src="js/features/items.js"></script>
+  <script src="js/features/people.js"></script>
+  <script src="js/features/hours.js"></script>
+  <script src="js/features/job-view.js"></script>
+  <script src="js/features/menu.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

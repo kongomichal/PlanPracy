@@ -1,0 +1,54 @@
+/* Karta dnia */
+.day {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 10px 12px; box-shadow: var(--shadow); cursor: pointer;
+  display: flex; flex-direction: column; gap: 6px; min-height: 150px;
+}
+.day:hover { border-color: var(--accent); }
+.day.today { border: 2px solid var(--accent); padding: 9px 11px; }
+.day.weekend { background: #fafbfc; }
+.day.problem { border-left: 5px solid var(--red); }
+.day-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.day-date { font-size: 15px; }
+.day-date b { text-transform: uppercase; }
+.day-place { font-size: 13px; color: var(--muted); font-weight: 600; }
+.day-goal { font-size: 15px; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.day-meta { font-size: 13px; color: var(--muted); margin-top: auto; }
+.day-empty { color: var(--muted); font-size: 14px; margin: auto 0; text-align: center; }
+.day .btn { align-self: flex-start; }
+
+/* Statusy */
+.badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.s-plan    { background: var(--accent-soft); color: var(--accent-dark); }
+.s-done    { background: var(--green-soft);  color: var(--green); }
+.s-partial { background: var(--amber-soft);  color: var(--amber); }
+.s-notdone { background: var(--red-soft);    color: var(--red); }
+.s-moved   { background: var(--gray-soft);   color: var(--muted); }
+
+/* Lista rzeczy */
+.items-day { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+.items-day-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 10px 14px; background: var(--gray-soft); cursor: pointer; font-weight: 700;
+}
+.items-day-head small { font-weight: 500; color: var(--muted); }
+.item-line { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); }
+.item-line input { width: 22px; height: 22px; accent-color: var(--green); flex-shrink: 0; }
+.item-line.done .item-text { text-decoration: line-through; color: var(--muted); }
+.item-text { flex: 1; }
+.tag { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--gray-soft); color: var(--muted); white-space: nowrap; }
+.tag.t-scaffold { background: var(--amber-soft); color: var(--amber); }
+.tag.t-tool     { background: var(--accent-soft); color: var(--accent-dark); }
+.tag.t-doc      { background: #efe9fd; color: #6d28d9; }
+.tag.t-material { background: var(--green-soft); color: var(--green); }
+
+.empty-state { text-align: center; padding: 40px 16px; color: var(--muted); background: var(--card); border: 1px dashed var(--line); border-radius: var(--radius); }
+
+/* Ekipa */
+.people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.person { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+.person-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.person-head h3 { font-size: 17px; }
+.person-line { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; cursor: pointer; }
+.person-line:hover { color: var(--accent); }
+.person-line span:last-child { color: var(--muted); white-space: nowrap; }

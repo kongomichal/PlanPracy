@@ -1,0 +1,37 @@
+/* Układ strony */
+.topbar { background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
+.topbar-inner {
+  max-width: 1400px; margin: 0 auto; padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+.logo { font-size: 20px; }
+.logo span { color: var(--muted); font-weight: 500; font-size: 15px; }
+
+.range-nav { display: flex; align-items: center; gap: 8px; }
+.range-label { min-width: 190px; text-align: center; font-size: 15px; }
+
+.tabs { max-width: 1400px; margin: 0 auto; padding: 0 16px; display: flex; gap: 4px; overflow-x: auto; }
+.tab {
+  background: none; border: none; border-bottom: 3px solid transparent;
+  padding: 10px 14px; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.count { background: var(--red); color: #fff; font-size: 12px; padding: 1px 7px; border-radius: 10px; margin-left: 4px; }
+.count:empty { display: none; }
+
+.page { max-width: 1400px; margin: 0 auto; padding: 16px; }
+.view { display: none; }
+.view.active { display: block; }
+.view-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.view-head h2 { font-size: 22px; }
+
+.week-title { font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 8px 0 8px; }
+.days { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; margin-bottom: 18px; }
+
+@media (max-width: 520px) {
+  .days { grid-template-columns: 1fr; }
+  .range-label { min-width: 0; font-size: 14px; }
+  .topbar-inner { padding: 8px 12px; }
+  .page { padding: 12px; }
+}

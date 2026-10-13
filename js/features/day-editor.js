@@ -6,16 +6,18 @@ const DayEditor = {
 
   open(key, showMove = false, jobIndex = 0) {
     this.key = key;
-    this.jobs = JSON.parse(JSON.stringify(Store.get(key).jobs));
+    const day = Store.get(key);
+    const rawJobs = Array.isArray(day?.jobs) ? day.jobs : [];
+    this.jobs = JSON.parse(JSON.stringify(rawJobs));
     if (!this.jobs.length) this.jobs.push(Store.emptyJob());
-    this.current = Math.min(jobIndex, this.jobs.length - 1);
+    this.current = Math.max(0, Math.min(jobIndex, this.jobs.length - 1));
 
-    $('dayTitle').textContent = longDate(parseKey(key));
+    if ($('dayTitle')) $('dayTitle').textContent = longDate(parseKey(key));
     this.fillMoveTargets();
     this.loadJob();
-    $('movePanel').hidden = !showMove;
+    if ($('movePanel')) $('movePanel').hidden = !showMove;
     openModal('dayModal');
-    if (!showMove) setTimeout(() => $('fPlace').focus(), 50);
+    if (!showMove && $('fPlace')) setTimeout(() => $('fPlace').focus(), 50);
   },
 
   close() { closeModal('dayModal'); this.key = null; },
@@ -90,8 +92,9 @@ const DayEditor = {
       <button type="button" class="btn small subtask-add-btn" data-add-subtask>+ Dodaj zadanie podrzędne</button>
     `;
     const subContainer = card.querySelector('.subtasks-container');
-    (task.subtasks || []).forEach(st => this.addSubtaskRow(subContainer, st));
-    $('tasksList').appendChild(card);
+    const subtasks = (task.subtasks && task.subtasks.length) ? task.subtasks : [''];
+    subtasks.forEach(st => this.addSubtaskRow(subContainer, st));
+    if ($('tasksList')) $('tasksList').appendChild(card);
     return card;
   },
 

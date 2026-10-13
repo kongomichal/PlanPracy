@@ -67,7 +67,7 @@ const Plan = {
 
     const body = day.jobs.length
       ? day.jobs.map((j, i) => this.jobHtml(key, j, i)).join('')
-      : '<div class="day-empty">+ Dodaj plan</div>';
+      : `<div class="day-empty" data-edit="${key}">+ Dodaj plan</div>`;
 
     return `
       <article class="${classes}" data-date="${key}">

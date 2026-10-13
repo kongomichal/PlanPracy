@@ -134,7 +134,9 @@ const Store = {
   },
 
   get(key) {
-    return this.data[key] || this.empty(key);
+    const day = this.data[key] || this.empty(key);
+    if (!Array.isArray(day.jobs)) day.jobs = [];
+    return day;
   },
 
   set(key, day) {

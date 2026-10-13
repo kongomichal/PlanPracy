@@ -22,17 +22,36 @@ const Plan = {
     const hours = job.people.reduce((s, p) => s + hoursBetween(p.from, p.to), 0);
     const todo = job.items.filter(i => !i.done).length;
 
-    // Projekt i zadanie – zawsze w całości. Reszta jako małe znaczniki.
+    // Projekt i zadania – zawsze w całości bez obcinania
     const chips = [
       job.status !== 'plan' ? `<span class="badge s-${job.status}">${STATUS[job.status]}</span>` : '',
       `<span class="chip" title="Liczba osób i godzin">👷 ${job.people.length} · ${fmtHours(hours)}</span>`,
       todo ? `<span class="chip alert" title="Rzeczy do załatwienia">⚠ ${todo} do zabrania</span>` : ''
     ].filter(Boolean).join('');
 
+    const tasks = Array.isArray(job.tasks) && job.tasks.length
+      ? job.tasks
+      : (job.goal ? Store.parseGoalToTasks(job.goal) : []);
+
+    const tasksHtml = tasks.length
+      ? `<div class="job-tasks">
+          ${tasks.map(t => `
+            <div class="job-task">
+              <div class="task-title">${esc(t.title)}</div>
+              ${t.subtasks && t.subtasks.length ? `
+                <ul class="task-subtasks">
+                  ${t.subtasks.map(st => `<li>${esc(st)}</li>`).join('')}
+                </ul>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>`
+      : `<div class="job-goal muted">Brak zadań</div>`;
+
     return `
       <div class="job ${problem ? 'problem' : ''}" data-job="${index}">
         <div class="job-project">${esc(job.place) || '<span class="muted">Bez projektu</span>'}</div>
-        <div class="job-goal">${esc(job.goal) || '<span class="muted">Bez opisu zadania</span>'}</div>
+        ${tasksHtml}
         <div class="chips">${chips}</div>
         ${problem ? `<button class="btn small" data-move="${key}" data-job-move="${index}">Przenieś</button>` : ''}
       </div>`;

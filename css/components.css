@@ -2,7 +2,7 @@
 .day {
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 10px 12px; box-shadow: var(--shadow); cursor: pointer;
-  display: flex; flex-direction: column; gap: 6px; min-height: 150px;
+  display: flex; flex-direction: column; gap: 6px; min-height: 150px; height: auto;
 }
 .day:hover { border-color: var(--accent); }
 .day.today { border: 2px solid var(--accent); padding: 9px 11px; }
@@ -12,7 +12,7 @@
 .day-date { font-size: 15px; }
 .day-date b { text-transform: uppercase; }
 .day-place { font-size: 13px; color: var(--muted); font-weight: 600; }
-.day-goal { font-size: 15px; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.day-goal { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; white-space: normal; }
 .day-meta { font-size: 13px; color: var(--muted); margin-top: auto; }
 .day-empty { color: var(--muted); font-size: 14px; margin: auto 0; text-align: center; }
 .day .btn { align-self: flex-start; }

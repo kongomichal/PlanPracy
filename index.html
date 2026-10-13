@@ -125,11 +125,17 @@
 
       <div class="modal-body">
         <section class="block">
-          <h3>1. Gdzie i co robimy</h3>
-          <label for="fPlace">Miejsce</label>
-          <input id="fPlace" type="text" placeholder="np. Wilanów, ul. Różana 14">
-          <label for="fGoal">Cel na ten dzień</label>
-          <textarea id="fGoal" rows="2" placeholder="np. Montaż płyt GK na poddaszu"></textarea>
+          <h3>1. Projekt / Miejsce</h3>
+          <label for="fPlace">Projekt</label>
+          <input id="fPlace" type="text" placeholder="np. Tefra - N2 lub Wilanów, ul. Różana 14">
+        </section>
+
+        <section class="block">
+          <div class="row between">
+            <h3>2. Zadania</h3>
+            <button id="addTaskBtn" type="button" class="btn small">+ Dodaj zadanie główne</button>
+          </div>
+          <div id="tasksList" class="tasks-editor-list"></div>
         </section>
 
         <section class="block">

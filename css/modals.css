@@ -20,6 +20,21 @@
 .move-panel { background: var(--accent-soft); padding: 12px; border-radius: 8px; margin-top: 12px; border: none; }
 .move-panel .row { margin: 8px 0 4px; }
 
+/* Edytor zadań i podzadań */
+.tasks-editor-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.task-editor-card {
+  background: var(--gray-soft); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
+}
+.task-editor-head { display: flex; align-items: center; gap: 8px; }
+.task-editor-num { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.task-title-input { flex: 1; font-weight: 600; font-size: 15px; }
+.subtasks-container { display: flex; flex-direction: column; gap: 6px; padding-left: 10px; }
+.subtask-row { display: flex; align-items: center; gap: 6px; }
+.subtask-bullet { font-weight: bold; color: var(--muted); font-size: 16px; user-select: none; }
+.subtask-input { flex: 1; font-size: 14px; padding: 6px 10px; background: #fff; }
+.subtask-add-btn { align-self: flex-start; margin-left: 18px; font-size: 13px; }
+
 /* Wiersze osób i rzeczy w edytorze */
 .person-row { display: grid; grid-template-columns: 1fr 100px 100px 32px; gap: 6px; margin-bottom: 6px; align-items: center; }
 .item-row { display: grid; grid-template-columns: 24px 120px 1fr 32px; gap: 6px; margin-bottom: 6px; align-items: center; }

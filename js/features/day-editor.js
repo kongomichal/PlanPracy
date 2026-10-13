@@ -15,7 +15,7 @@ const DayEditor = {
     this.loadJob();
     $('movePanel').hidden = !showMove;
     openModal('dayModal');
-    if (!showMove) setTimeout(() => $('fGoal').focus(), 50);
+    if (!showMove) setTimeout(() => $('fPlace').focus(), 50);
   },
 
   close() { closeModal('dayModal'); this.key = null; },
@@ -23,7 +23,8 @@ const DayEditor = {
   /* ---------- zakładki prac ---------- */
   renderTabs() {
     const tabs = this.jobs.map((j, i) => {
-      const label = j.goal ? j.goal : 'Nowa praca';
+      const mainTask = j.tasks?.[0]?.title || '';
+      const label = mainTask || j.place || j.goal || 'Nowa praca';
       return `<button type="button" class="job-tab ${i === this.current ? 'active' : ''}" data-tab="${i}">${i + 1}. ${esc(label)}</button>`;
     }).join('');
     $('jobTabs').innerHTML = tabs + '<button type="button" class="job-tab add" data-add-job>+ Praca</button>';
@@ -55,11 +56,18 @@ const DayEditor = {
   /* ---------- formularz jednej pracy ---------- */
   loadJob() {
     const job = this.jobs[this.current];
-    $('fPlace').value = job.place;
-    $('fGoal').value = job.goal;
-    $('fResult').value = job.result;
+    $('fPlace').value = job.place || '';
+    $('fResult').value = job.result || '';
     const radio = document.querySelector(`input[name="fStatus"][value="${job.status === 'moved' ? 'notdone' : job.status}"]`);
     if (radio) radio.checked = true;
+
+    // Zadania i zadania podrzędne
+    $('tasksList').innerHTML = '';
+    const tasks = Array.isArray(job.tasks) && job.tasks.length
+      ? job.tasks
+      : (job.goal ? Store.parseGoalToTasks(job.goal) : [{ title: '', subtasks: [] }]);
+
+    tasks.forEach(t => this.addTaskCard(t));
 
     $('peopleRows').innerHTML = '';
     job.people.forEach(p => this.addPerson(p));
@@ -67,6 +75,38 @@ const DayEditor = {
     job.items.forEach(i => this.addItem(i));
     this.recalc();
     this.renderTabs();
+  },
+
+  addTaskCard(task = { title: '', subtasks: [] }) {
+    const card = document.createElement('div');
+    card.className = 'task-editor-card';
+    card.innerHTML = `
+      <div class="task-editor-head">
+        <span class="task-editor-num">Zadanie:</span>
+        <input type="text" class="task-title-input" placeholder="Zadanie główne (np. Płytka)" value="${esc(task.title || '')}">
+        <button type="button" class="btn small icon" data-remove-task title="Usuń to zadanie">✕</button>
+      </div>
+      <div class="subtasks-container"></div>
+      <button type="button" class="btn small subtask-add-btn" data-add-subtask>+ Dodaj zadanie podrzędne</button>
+    `;
+    const subContainer = card.querySelector('.subtasks-container');
+    (task.subtasks || []).forEach(st => this.addSubtaskRow(subContainer, st));
+    $('tasksList').appendChild(card);
+    return card;
+  },
+
+  addSubtaskRow(container, text = '') {
+    const row = document.createElement('div');
+    row.className = 'subtask-row';
+    row.innerHTML = `
+      <span class="subtask-bullet">–</span>
+      <input type="text" class="subtask-input" placeholder="Zadanie podrzędne (np. bok lewa strona)" value="${esc(text)}">
+      <button type="button" class="btn small icon" data-remove-subtask title="Usuń podzadanie">✕</button>
+    `;
+    container.appendChild(row);
+    const input = row.querySelector('.subtask-input');
+    if (!text) setTimeout(() => input.focus(), 30);
+    return row;
   },
 
   addPerson(p = { name: '', from: '07:00', to: '15:30' }) {
@@ -105,6 +145,16 @@ const DayEditor = {
 
   /** Odczyt formularza -> obiekt jednej pracy. */
   collect() {
+    const tasks = [...document.querySelectorAll('#tasksList .task-editor-card')].map(card => {
+      const title = card.querySelector('.task-title-input').value.trim();
+      const subtasks = [...card.querySelectorAll('.subtask-input')]
+        .map(inp => inp.value.trim())
+        .filter(Boolean);
+      return { title, subtasks };
+    }).filter(t => t.title || t.subtasks.length);
+
+    const goalSummary = tasks.map(t => t.title + (t.subtasks.length ? ': ' + t.subtasks.join(', ') : '')).join('; ');
+
     const people = [...document.querySelectorAll('#peopleRows .person-row')]
       .map(r => ({
         name: r.querySelector('.p-name').value.trim(),
@@ -125,7 +175,8 @@ const DayEditor = {
 
     return {
       place: $('fPlace').value.trim(),
-      goal: $('fGoal').value.trim(),
+      tasks,
+      goal: goalSummary,
       status: document.querySelector('input[name="fStatus"]:checked').value,
       people, items,
       result: $('fResult').value.trim()
@@ -175,6 +226,49 @@ const DayEditor = {
   },
 
   init() {
+    $('addTaskBtn').addEventListener('click', () => {
+      const card = this.addTaskCard();
+      card.querySelector('.task-title-input').focus();
+    });
+
+    $('tasksList').addEventListener('click', (e) => {
+      const addSubBtn = e.target.closest('[data-add-subtask]');
+      if (addSubBtn) {
+        const card = addSubBtn.closest('.task-editor-card');
+        const container = card.querySelector('.subtasks-container');
+        this.addSubtaskRow(container, '');
+        return;
+      }
+
+      const removeSubBtn = e.target.closest('[data-remove-subtask]');
+      if (removeSubBtn) {
+        removeSubBtn.closest('.subtask-row').remove();
+        return;
+      }
+
+      const removeTaskBtn = e.target.closest('[data-remove-task]');
+      if (removeTaskBtn) {
+        const cards = document.querySelectorAll('#tasksList .task-editor-card');
+        if (cards.length > 1) {
+          removeTaskBtn.closest('.task-editor-card').remove();
+        } else {
+          const card = removeTaskBtn.closest('.task-editor-card');
+          card.querySelector('.task-title-input').value = '';
+          card.querySelector('.subtasks-container').innerHTML = '';
+        }
+        this.renderTabs();
+        return;
+      }
+    });
+
+    $('tasksList').addEventListener('input', (e) => {
+      if (e.target.classList.contains('task-title-input')) {
+        this.renderTabs();
+      }
+    });
+
+    $('fPlace').addEventListener('input', () => this.renderTabs());
+
     $('addPersonBtn').addEventListener('click', () => this.addPerson());
     $('addItemBtn').addEventListener('click', () => this.addItem());
     $('saveDayBtn').addEventListener('click', () => this.save());

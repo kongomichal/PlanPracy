@@ -53,26 +53,80 @@ const Store = {
     }).catch(() => toast('Nie udało się zapisać w chmurze'));
   },
 
-  /** Zamienia stary format (1 praca w dniu) na nowy (lista prac). */
+  /** Przekształca tekst celu na strukturę zadań i podzadań dla starych wpisów. */
+  parseGoalToTasks(goal) {
+    if (!goal || typeof goal !== 'string') return [];
+    const trimmed = goal.trim();
+    if (!trimmed) return [];
+
+    // np. "Płytka: - bok lewa strona - środek góra - piony dół - przeniesienie rusztowania drugi bok"
+    if (trimmed.includes(':') && (trimmed.includes(' - ') || trimmed.includes('\n-') || trimmed.includes('\n•') || trimmed.includes(' • '))) {
+      const colonIdx = trimmed.indexOf(':');
+      const title = trimmed.slice(0, colonIdx).trim();
+      const rest = trimmed.slice(colonIdx + 1);
+      const subtasks = rest.split(/(?:\r?\n|\s+)(?:-|•)\s+/)
+        .map(s => s.trim().replace(/^[-•]\s*/, ''))
+        .filter(Boolean);
+      return [{ title, subtasks }];
+    }
+
+    const lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length > 1 && lines.slice(1).some(l => l.startsWith('-') || l.startsWith('•'))) {
+      const title = lines[0].replace(/:$/, '').trim();
+      const subtasks = lines.slice(1).map(l => l.replace(/^[-•]\s*/, '').trim()).filter(Boolean);
+      return [{ title, subtasks }];
+    }
+
+    return [{ title: trimmed, subtasks: [] }];
+  },
+
+  /** Normalizuje pojedynczą pracę (zapewnia istnienie tasks[] i spójność goal). */
+  normalizeJob(j) {
+    let tasks = Array.isArray(j.tasks) ? j.tasks : [];
+    if (!tasks.length && j.goal) {
+      tasks = this.parseGoalToTasks(j.goal);
+    }
+    tasks = tasks.map(t => ({
+      title: typeof t === 'string' ? t : (t.title || ''),
+      subtasks: Array.isArray(t.subtasks) ? t.subtasks.map(s => String(s).trim()).filter(Boolean) : []
+    })).filter(t => t.title || t.subtasks.length);
+
+    const goal = j.goal || tasks.map(t => t.title + (t.subtasks.length ? ': ' + t.subtasks.join(', ') : '')).join('; ');
+
+    return {
+      place: j.place || '',
+      goal,
+      tasks,
+      status: j.status || 'plan',
+      people: j.people || [],
+      items: j.items || [],
+      result: j.result || ''
+    };
+  },
+
+  /** Zamienia stary format (1 praca w dniu) na nowy (lista prac ze strukturą zadań). */
   normalize(data) {
     const out = {};
     Object.entries(data || {}).forEach(([key, day]) => {
-      if (Array.isArray(day.jobs)) { out[key] = { date: key, jobs: day.jobs }; return; }
-      const job = {
-        place: day.place || '', goal: day.goal || '', status: day.status || 'plan',
-        people: day.people || [], items: day.items || [], result: day.result || ''
-      };
-      out[key] = { date: key, jobs: this.jobHasContent(job) ? [job] : [] };
+      let jobs = [];
+      if (Array.isArray(day.jobs)) {
+        jobs = day.jobs.map(j => this.normalizeJob(j));
+      } else {
+        const j = this.normalizeJob(day);
+        if (this.jobHasContent(j)) jobs.push(j);
+      }
+      out[key] = { date: key, jobs };
     });
     return out;
   },
 
   emptyJob() {
-    return { place: '', goal: '', status: 'plan', people: [], items: [], result: '' };
+    return { place: '', goal: '', tasks: [{ title: '', subtasks: [] }], status: 'plan', people: [], items: [], result: '' };
   },
 
   jobHasContent(j) {
-    return !!(j.goal || j.place || j.people.length || j.items.length);
+    const hasTasks = Array.isArray(j.tasks) && j.tasks.some(t => t.title || (t.subtasks && t.subtasks.length));
+    return !!(j.place || hasTasks || j.goal || j.people.length || j.items.length);
   },
 
   empty(key) {

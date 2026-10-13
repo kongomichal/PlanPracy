@@ -19,10 +19,15 @@
 .job-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
 .item-job { font-size: 12px; color: var(--muted); }
 
-/* Kafelek pracy na karcie dnia: projekt i zadanie w całości, reszta jako znaczniki */
+/* Kafelek pracy na karcie dnia: projekt i zadania w całości, reszta jako znaczniki */
 .job { gap: 4px; padding: 9px 11px; }
-.job-project { font-size: 16px; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
-.job-goal { font-size: 15px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; white-space: normal; }
+.job-project { font-size: 15px; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; color: var(--accent-dark); margin-bottom: 2px; }
+.job-goal { font-size: 14.5px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; white-space: normal; }
+.job-tasks { display: flex; flex-direction: column; gap: 6px; margin: 2px 0 4px; }
+.job-task { display: flex; flex-direction: column; gap: 2px; }
+.job-task .task-title { font-size: 14.5px; font-weight: 700; color: #1e293b; line-height: 1.35; overflow-wrap: anywhere; }
+.job-task .task-subtasks { margin: 2px 0 2px 18px; padding: 0; list-style-type: disc; display: flex; flex-direction: column; gap: 3px; }
+.job-task .task-subtasks li { font-size: 13.5px; font-weight: 500; color: #334155; line-height: 1.35; overflow-wrap: anywhere; }
 .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
 .chip { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: var(--gray-soft); color: var(--muted); white-space: nowrap; }
 .chip.alert { background: var(--red-soft); color: var(--red); }

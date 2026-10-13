@@ -35,12 +35,31 @@ const JobView = {
       ? job.items.map(i => `<div class="view-item ${i.done ? 'done' : ''}">${i.done ? '✅' : '⬜'} <span class="tag t-${i.type}">${ITEM_TYPES[i.type] || 'Inne'}</span> ${esc(i.text)}</div>`).join('')
       : '<span class="muted">Nic nie trzeba zabierać</span>';
 
+    const tasks = Array.isArray(job.tasks) && job.tasks.length
+      ? job.tasks
+      : (job.goal ? Store.parseGoalToTasks(job.goal) : []);
+
+    const tasksHtml = tasks.length ? `
+      <div class="job-tasks">
+        ${tasks.map(t => `
+          <div class="job-task">
+            <div class="task-title"><b>${esc(t.title)}</b></div>
+            ${t.subtasks && t.subtasks.length ? `
+              <ul class="task-subtasks">
+                ${t.subtasks.map(st => `<li>${esc(st)}</li>`).join('')}
+              </ul>
+            ` : ''}
+          </div>
+        `).join('')}
+      </div>
+    ` : `<div class="view-text">${esc(job.goal) || '—'}</div>`;
+
     return `
       <div class="view-sec">
         <span class="badge s-${job.status}">${STATUS[job.status]}</span>
         <div class="view-big">${esc(job.place) || 'Bez projektu'}</div>
       </div>
-      <div class="view-sec"><h3>Do zrobienia</h3><div class="view-text">${esc(job.goal) || '—'}</div></div>
+      <div class="view-sec"><h3>Zadania</h3>${tasksHtml}</div>
       <div class="view-sec"><h3>Ekipa i godziny</h3>${people}</div>
       <div class="view-sec"><h3>Do zabrania</h3>${items}</div>
       ${job.result ? `<div class="view-sec"><h3>Co zrobiono</h3><div class="view-text">${esc(job.result)}</div></div>` : ''}`;

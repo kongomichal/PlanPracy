@@ -7,9 +7,13 @@ const Store = {
 
   unsub: null,
 
+  REMINDERS_KEY: 'muraven_reminders_v1',
+  reminders: null,
+
   col() { return firebase.firestore().collection('days'); },
 
   load() {
+    this.loadReminders();
     if (CLOUD_ENABLED) { this.data = {}; return; } // dane przyjdą z chmury po zalogowaniu
     try {
       const raw = localStorage.getItem(this.KEY);
@@ -159,21 +163,101 @@ const Store = {
     }
   },
 
-  hasContent(day) {
-    return (day.jobs && day.jobs.length > 0) || !!day.dismissed;
+  defaultReminders() {
+    return {
+      sections: [
+        { id: 'sec-general', name: 'Ogólne', color: '#2563eb' },
+        { id: 'sec-sites', name: 'Budowy', color: '#ea580c' },
+        { id: 'sec-materials', name: 'Materiały i zakupy', color: '#16a34a' }
+      ],
+      items: [
+        { id: 'rem-1', sectionId: 'sec-sites', text: 'Sprawdzić rusztowanie na budowie Tefra', done: false, parentId: null, createdAt: Date.now() },
+        { id: 'rem-2', sectionId: 'sec-sites', text: 'Zrobić odbiór techniczny poziomów', done: false, parentId: 'rem-1', createdAt: Date.now() },
+        { id: 'rem-3', sectionId: 'sec-materials', text: 'Zamówić fugi i taśmy zbrojące', done: false, parentId: null, createdAt: Date.now() }
+      ]
+    };
+  },
+
+  loadReminders() {
+    try {
+      const raw = localStorage.getItem(this.REMINDERS_KEY);
+      if (raw) {
+        this.reminders = JSON.parse(raw);
+        if (!Array.isArray(this.reminders.sections)) this.reminders.sections = [];
+        if (!Array.isArray(this.reminders.items)) this.reminders.items = [];
+        return this.reminders;
+      }
+    } catch (e) { console.error('Błąd odczytu przypomnień', e); }
+    this.reminders = this.defaultReminders();
+    this.saveReminders();
+    return this.reminders;
+  },
+
+  saveReminders() {
+    if (!this.reminders) return;
+    localStorage.setItem(this.REMINDERS_KEY, JSON.stringify(this.reminders));
+    if (CLOUD_ENABLED && firebase.firestore) {
+      this.col().doc('_reminders').set(JSON.parse(JSON.stringify(this.reminders)))
+        .catch(() => {});
+    }
+  },
+
+  addHoursEntry({ date, name, from, to, project }) {
+    if (!date || !name || !from || !to) return false;
+    const day = this.get(date);
+    const projName = (project || '').trim() || 'Prace ogólne';
+
+    // Znajdź istniejącą pracę z tym projektem lub stwórz nową
+    let job = day.jobs.find(j => (j.place || '').toLowerCase() === projName.toLowerCase());
+    if (!job) {
+      job = {
+        place: projName,
+        goal: '',
+        tasks: [],
+        status: 'plan',
+        people: [],
+        items: [],
+        result: ''
+      };
+      day.jobs.push(job);
+    }
+
+    job.people.push({
+      name: name.trim(),
+      from: from,
+      to: to,
+      realFrom: from,
+      realTo: to
+    });
+
+    this.set(date, day);
+    return true;
   },
 
   exportJson() {
-    return JSON.stringify(this.data, null, 2);
+    return JSON.stringify({
+      days: this.data,
+      reminders: this.reminders || this.loadReminders()
+    }, null, 2);
   },
 
   importJson(text) {
     const parsed = JSON.parse(text);
     if (!parsed || typeof parsed !== 'object') throw new Error('Zły format');
-    this.replaceAll(this.normalize(parsed));
+    if (parsed.days) {
+      this.replaceAll(this.normalize(parsed.days));
+      if (parsed.reminders) {
+        this.reminders = parsed.reminders;
+        this.saveReminders();
+      }
+    } else {
+      this.replaceAll(this.normalize(parsed));
+    }
   },
 
   resetToSample() {
     this.replaceAll(buildSampleData(mondayOf()));
+    this.reminders = this.defaultReminders();
+    this.saveReminders();
   }
 };

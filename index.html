@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Muraven – prosty plan pracy: kto, gdzie, co i jakie rzeczy zabrać.">
+  <meta name="description" content="Muraven – prosty plan pracy, rejestracja godzin i przypomnienia.">
   <title>Muraven – Plan pracy</title>
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/modals.css">
   <link rel="stylesheet" href="css/jobs.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/reminders.css">
+  <link rel="stylesheet" href="css/hours.css">
 </head>
 <body>
 
@@ -33,27 +36,82 @@
   <!-- ============ NAGŁÓWEK ============ -->
   <header class="topbar">
     <div class="topbar-inner">
-      <h1 class="logo">Muraven <span>plan pracy</span></h1>
+      <div class="row">
+        <button id="backToDashBtn" class="btn back-to-dash-btn" hidden>← Menu główne</button>
+        <h1 class="logo main-logo-btn" id="mainLogoBtn">Muraven <span>plan pracy</span></h1>
+      </div>
 
-      <div class="range-nav">
+      <div id="rangeNav" class="range-nav" hidden>
         <strong id="rangeLabel" class="range-label"></strong>
       </div>
 
       <button id="menuBtn" class="btn">Menu</button>
     </div>
 
-    <nav class="tabs" id="tabs">
-      <button class="tab active" data-tab="plan">Plan</button>
+    <!-- Zakładki modułu Plan -->
+    <nav class="tabs" id="planTabs" hidden>
+      <button class="tab active" data-tab="plan">Plan (30 dni)</button>
       <button class="tab" data-tab="items">Rzeczy do przygotowania <span id="itemsBadge" class="count"></span></button>
       <button class="tab" data-tab="people">Ekipa</button>
-      <button class="tab" data-tab="hours">Godziny</button>
     </nav>
   </header>
 
   <main class="page">
 
-    <!-- PLAN -->
-    <section id="view-plan" class="view active">
+    <!-- ============ 1. EKRAN GŁÓWNY (3 KAFELKI NA WEJŚCIU) ============ -->
+    <section id="view-dashboard" class="view active">
+      <div class="dashboard-container">
+        <div class="dashboard-header">
+          <h2>Dzień dobry 👋</h2>
+          <p class="muted">Wybierz moduł, do którego chcesz przejść:</p>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- NAJWIĘKSZY KAFELEK: PLAN PRACY -->
+          <div class="dash-card dash-card-main" data-nav="plan">
+            <div class="dash-card-badge">Główny moduł</div>
+            <div class="dash-card-icon">📅</div>
+            <div class="dash-card-content">
+              <h3 class="dash-card-title">Plan pracy</h3>
+              <p class="dash-card-desc">Ciągły 30-dniowy harmonogram roboczy z odklikiwaniem minionych dni, przydziałem prac budowlanych, ekipą oraz rzeczami do przygotowania.</p>
+            </div>
+            <div class="dash-card-footer">
+              <span class="dash-stat" id="dashPlanStat">30 aktywnych dni</span>
+              <span class="dash-card-btn">Otwórz plan →</span>
+            </div>
+          </div>
+
+          <!-- KAFELEK: DODAJ GODZINY -->
+          <div class="dash-card" data-nav="hours">
+            <div class="dash-card-icon icon-hours">⏱️</div>
+            <div class="dash-card-content">
+              <h3 class="dash-card-title">Dodaj godziny</h3>
+              <p class="dash-card-desc">Prosty wzornik dodawania godzin ekipy (Imię i nazwisko, od – do) oraz automatyczne podsumowanie i rozliczenie.</p>
+            </div>
+            <div class="dash-card-footer">
+              <span class="dash-stat" id="dashHoursStat">Rozlicz godziny</span>
+              <span class="dash-card-btn">Otwórz godziny →</span>
+            </div>
+          </div>
+
+          <!-- KAFELEK: PRZYPOMNIENIA (iCloud style) -->
+          <div class="dash-card" data-nav="reminders">
+            <div class="dash-card-icon icon-reminders">📝</div>
+            <div class="dash-card-content">
+              <h3 class="dash-card-title">Przypomnienia</h3>
+              <p class="dash-card-desc">Listy zadań w stylu iCloud – sekcje, zagnieżdżanie (przypomnienie w przypomnienie), odklikiwanie i archiwum.</p>
+            </div>
+            <div class="dash-card-footer">
+              <span class="dash-stat" id="dashRemindersStat">0 zadań</span>
+              <span class="dash-card-btn">Otwórz przypomnienia →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2. MODUŁ PLAN ============ -->
+    <section id="view-plan" class="view">
       <div class="plan-toolbar">
         <div class="plan-toolbar-left">
           <button id="dismissPastBtn" class="btn small success-btn" title="Odkliknij wszystkie dni, które już minęły" hidden>
@@ -90,29 +148,113 @@
       <div class="view-head">
         <div>
           <h2>Ekipa</h2>
-          <p class="muted">Kto, gdzie i w jakich godzinach pracuje.</p>
+          <p class="muted">Kto, gdzie i w jakich godzinach pracuje w bieżącym okresie.</p>
         </div>
       </div>
       <div id="peopleList" class="people-grid"></div>
     </section>
 
-    <!-- GODZINY -->
+    <!-- ============ 3. MODUŁ DODAJ GODZINY ============ -->
     <section id="view-hours" class="view">
-      <div class="view-head">
-        <div>
-          <h2>Podsumowanie godzin</h2>
-          <p class="muted">Kto ile godzin i gdzie pracował – do przepisania do innego programu.</p>
+      <div class="hours-wrap">
+        <div class="view-head">
+          <div>
+            <h2>Dodaj godziny i podsumowanie</h2>
+            <p class="muted">Wprowadź czas pracy pracownika (imię, od, do) – system automatycznie doda go do rozliczenia.</p>
+          </div>
         </div>
-        <div class="row wrap">
-          <select id="hoursRange" aria-label="Zakres">
-            <option value="window">Widoczne 30 dni</option>
-            <option value="all">Cały zapis (wszystkie dni)</option>
-          </select>
-          <button id="copyHoursBtn" class="btn">Kopiuj jako tekst</button>
+
+        <!-- Wzornik szybkiego dodawania godzin -->
+        <div class="hours-entry-card">
+          <h3>Wzornik dodawania godzin</h3>
+          <form id="quickHoursForm" class="quick-hours-form">
+            <div class="quick-form-grid">
+              <div class="form-group">
+                <label for="qhDate">Data</label>
+                <input type="date" id="qhDate" required>
+              </div>
+              <div class="form-group">
+                <label for="qhName">Imię i nazwisko</label>
+                <input type="text" id="qhName" list="peopleNames" placeholder="np. Tomasz Nowak" required>
+              </div>
+              <div class="form-group">
+                <label for="qhFrom">Od godziny</label>
+                <input type="time" id="qhFrom" value="07:00" required>
+              </div>
+              <div class="form-group">
+                <label for="qhTo">Do godziny</label>
+                <input type="time" id="qhTo" value="15:30" required>
+              </div>
+              <div class="form-group">
+                <label for="qhProject">Projekt / Budowa</label>
+                <input type="text" id="qhProject" placeholder="np. Tefra lub Ogólne">
+              </div>
+            </div>
+
+            <div class="quick-hours-actions">
+              <div class="calculated-hours-pill">
+                Czas pracy: <strong id="qhCalculated">8,5 h</strong>
+              </div>
+              <button type="submit" class="btn primary">+ Zapisz godziny</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Podsumowanie godzin -->
+        <div class="hours-summary-header">
+          <h3>Podsumowanie godzin</h3>
+          <div class="row wrap">
+            <span class="hours-total-badge">Suma: <span id="hoursTotalSumBadge">0 h</span></span>
+            <select id="hoursRange" aria-label="Zakres">
+              <option value="window">Widoczne 30 dni</option>
+              <option value="all">Cały zapis (wszystkie dni)</option>
+            </select>
+            <button id="copyHoursBtn" class="btn">Kopiuj jako tekst</button>
+          </div>
+        </div>
+        <p class="muted small" style="margin-bottom:12px">Liczone są godziny rzeczywiste. Gdy ich nie wpisano, brany jest plan (oznaczony szarym „plan”).</p>
+        <div id="hoursList"></div>
+      </div>
+    </section>
+
+    <!-- ============ 4. MODUŁ PRZYPOMNIENIA (iCloud Reminders style) ============ -->
+    <section id="view-reminders" class="view">
+      <div class="reminders-wrap">
+        <div class="reminders-head">
+          <div>
+            <h2>Przypomnienia</h2>
+            <p class="muted">Listy zadań i spraw do załatwienia w stylu iCloud z sekcjami, podzadaniami i archiwum.</p>
+          </div>
+        </div>
+
+        <!-- Pasek sekcji (kategorii) -->
+        <div id="remindersSectionsBar" class="rem-sections-bar"></div>
+
+        <!-- Główna karta z zadaniami -->
+        <div class="reminders-card">
+          <div class="rem-card-header">
+            <h3 id="remindersSectionTitle">Wszystkie przypomnienia</h3>
+          </div>
+
+          <!-- Szybkie dodawanie nowego przypomnienia -->
+          <form id="remAddForm" class="rem-add-form">
+            <input type="text" id="remAddInput" class="rem-add-input" placeholder="+ Dodaj nowe przypomnienie... (Wpisz treść i naciśnij Enter)">
+            <button type="submit" class="btn primary">Dodaj</button>
+          </form>
+
+          <!-- Lista aktywnych zadań (z podzadaniami) -->
+          <div id="remindersActiveList" class="rem-list"></div>
+        </div>
+
+        <!-- Sekcja Archiwum -->
+        <div class="archive-section">
+          <div class="archive-top-bar">
+            <h4>Archiwum (<span id="remindersArchiveCount">0</span> wykonanych)</h4>
+            <button type="button" class="btn small" id="toggleArchiveBtn">Pokaż archiwum</button>
+          </div>
+          <div id="remindersArchiveBox" hidden></div>
         </div>
       </div>
-      <p class="muted small" style="margin-bottom:10px">Liczone są godziny rzeczywiste. Gdy ich nie wpisano, pokazany jest plan (oznaczony szarym „plan”).</p>
-      <div id="hoursList"></div>
     </section>
 
   </main>
@@ -257,18 +399,19 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=5"></script>
-  <script src="js/core/utils.js?v=5"></script>
-  <script src="js/core/sample-data.js?v=5"></script>
-  <script src="js/core/storage.js?v=5"></script>
-  <script src="js/features/auth.js?v=5"></script>
-  <script src="js/features/plan.js?v=5"></script>
-  <script src="js/features/day-editor.js?v=5"></script>
-  <script src="js/features/items.js?v=5"></script>
-  <script src="js/features/people.js?v=5"></script>
-  <script src="js/features/hours.js?v=5"></script>
-  <script src="js/features/job-view.js?v=5"></script>
-  <script src="js/features/menu.js?v=5"></script>
-  <script src="js/main.js?v=5"></script>
+  <script src="js/core/firebase-config.js?v=6"></script>
+  <script src="js/core/utils.js?v=6"></script>
+  <script src="js/core/sample-data.js?v=6"></script>
+  <script src="js/core/storage.js?v=6"></script>
+  <script src="js/features/auth.js?v=6"></script>
+  <script src="js/features/plan.js?v=6"></script>
+  <script src="js/features/day-editor.js?v=6"></script>
+  <script src="js/features/items.js?v=6"></script>
+  <script src="js/features/people.js?v=6"></script>
+  <script src="js/features/hours.js?v=6"></script>
+  <script src="js/features/reminders.js?v=6"></script>
+  <script src="js/features/job-view.js?v=6"></script>
+  <script src="js/features/menu.js?v=6"></script>
+  <script src="js/main.js?v=6"></script>
 </body>
 </html>

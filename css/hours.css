@@ -1,0 +1,96 @@
+/* Moduł Godziny: wzornik szybkiego dodawania godzin */
+.hours-wrap {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.hours-entry-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.hours-entry-card h3 {
+  font-size: 19px;
+  font-weight: 800;
+  margin-bottom: 14px;
+  color: #0f172a;
+}
+
+.quick-hours-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.quick-form-grid {
+  display: grid;
+  grid-template-columns: 140px 1.4fr 110px 110px 1.2fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.form-group label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.quick-hours-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.calculated-hours-pill {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #334155;
+  background: var(--green-soft);
+  color: var(--green);
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+}
+.calculated-hours-pill strong {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.hours-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.hours-total-badge {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 800;
+  font-size: 15px;
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+@media (max-width: 768px) {
+  .quick-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 480px) {
+  .quick-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,8 +1,9 @@
-/* Zakładka "Godziny": kto, gdzie, ile – jedno pod drugim, z możliwością skopiowania */
+/* Moduł "Godziny": szybki formularz dodawania godzin oraz automatyczne podsumowanie */
 const Hours = {
-  /** Zbiera dane: osoba -> projekt -> dni. Prace przeniesione na inny dzień są pomijane (żeby nie liczyć dwa razy). */
+  /** Zbiera dane: osoba -> projekt -> dni. Prace przeniesione na inny dzień są pomijane. */
   collect() {
-    const keys = $('hoursRange').value === 'all' ? Object.keys(Store.data).sort() : Plan.keys();
+    const rangeSelect = $('hoursRange');
+    const keys = (rangeSelect && rangeSelect.value === 'all') ? Object.keys(Store.data).sort() : Plan.keys();
     const people = {};
 
     keys.forEach(key => {
@@ -31,33 +32,81 @@ const Hours = {
     return `${DAYS_SHORT[d.getDay()]} ${shortDate(d)}.${d.getFullYear()}`;
   },
 
+  totalSum() {
+    let sum = 0;
+    Object.values(Store.data).forEach(day => {
+      day.jobs.forEach(job => {
+        if (job.status === 'moved') return;
+        job.people.forEach(p => {
+          sum += personHours(p).hours;
+        });
+      });
+    });
+    return sum;
+  },
+
+  recalcQuick() {
+    const from = $('qhFrom')?.value;
+    const to = $('qhTo')?.value;
+    if ($('qhCalculated')) {
+      $('qhCalculated').textContent = fmtHours(hoursBetween(from, to));
+    }
+  },
+
+  submitQuick() {
+    const date = $('qhDate')?.value;
+    const name = $('qhName')?.value.trim();
+    const from = $('qhFrom')?.value;
+    const to = $('qhTo')?.value;
+    const project = $('qhProject')?.value.trim();
+
+    if (!date || !name || !from || !to) {
+      return toast('Wypełnij wymagane pola (data, imię, od, do)');
+    }
+
+    const ok = Store.addHoursEntry({ date, name, from, to, project });
+    if (ok) {
+      App.render();
+      toast(`Zapisano ${fmtHours(hoursBetween(from, to))} dla ${name}`);
+      $('qhName').value = '';
+      $('qhProject').value = '';
+      $('qhName').focus();
+    }
+  },
+
   render() {
     const people = this.collect();
     const names = this.sortedNames(people);
     const box = $('hoursList');
 
-    if (!names.length) {
-      box.innerHTML = '<div class="empty-state">Brak godzin w wybranym zakresie.</div>';
-      return;
+    if (box) {
+      if (!names.length) {
+        box.innerHTML = '<div class="empty-state">Brak godzin w wybranym zakresie.</div>';
+      } else {
+        box.innerHTML = names.map(name => {
+          const person = people[name];
+          return `
+            <section class="h-person">
+              <div class="h-person-head"><span>${esc(name)}</span><span>${fmtHours(person.total)}</span></div>
+              ${Object.keys(person.projects).sort((a, b) => a.localeCompare(b, 'pl')).map(pn => {
+                const proj = person.projects[pn];
+                return `
+                  <div class="h-project"><span>${esc(pn)}</span><span>${fmtHours(proj.total)}</span></div>
+                  ${proj.lines.map(l => `
+                    <div class="h-line">
+                      <span>${this.lineLabel(l)}${l.goal ? ' · ' + esc(l.goal) : ''}${l.real ? '' : '<span class="h-plan">plan</span>'}</span>
+                      <span>${fmtHours(l.hours)}</span>
+                    </div>`).join('')}`;
+              }).join('')}
+            </section>`;
+        }).join('');
+      }
     }
 
-    box.innerHTML = names.map(name => {
-      const person = people[name];
-      return `
-        <section class="h-person">
-          <div class="h-person-head"><span>${esc(name)}</span><span>${fmtHours(person.total)}</span></div>
-          ${Object.keys(person.projects).sort((a, b) => a.localeCompare(b, 'pl')).map(pn => {
-            const proj = person.projects[pn];
-            return `
-              <div class="h-project"><span>${esc(pn)}</span><span>${fmtHours(proj.total)}</span></div>
-              ${proj.lines.map(l => `
-                <div class="h-line">
-                  <span>${this.lineLabel(l)}${l.goal ? ' · ' + esc(l.goal) : ''}${l.real ? '' : '<span class="h-plan">plan</span>'}</span>
-                  <span>${fmtHours(l.hours)}</span>
-                </div>`).join('')}`;
-          }).join('')}
-        </section>`;
-    }).join('');
+    const totalEl = $('hoursTotalSumBadge');
+    if (totalEl) {
+      totalEl.textContent = fmtHours(this.totalSum());
+    }
   },
 
   copyText() {
@@ -81,7 +130,20 @@ const Hours = {
   },
 
   init() {
-    $('hoursRange').addEventListener('change', () => this.render());
-    $('copyHoursBtn').addEventListener('click', () => this.copyText());
+    $('hoursRange')?.addEventListener('change', () => this.render());
+    $('copyHoursBtn')?.addEventListener('click', () => this.copyText());
+
+    if ($('qhDate') && !$('qhDate').value) {
+      $('qhDate').value = dateKey(new Date());
+    }
+
+    $('qhFrom')?.addEventListener('input', () => this.recalcQuick());
+    $('qhTo')?.addEventListener('input', () => this.recalcQuick());
+    this.recalcQuick();
+
+    $('quickHoursForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitQuick();
+    });
   }
 };

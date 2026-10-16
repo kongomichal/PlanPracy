@@ -33,8 +33,51 @@ const Store = {
     if (!CLOUD_ENABLED || this.unsub) return;
     this.unsub = this.col().onSnapshot((snap) => {
       const raw = {};
-      snap.forEach(doc => { raw[doc.id] = doc.data(); });
+      let cloudReminders = null;
+
+      snap.forEach(doc => {
+        if (doc.id === '_reminders') {
+          cloudReminders = doc.data();
+        } else {
+          raw[doc.id] = doc.data();
+        }
+      });
+
       this.data = this.normalize(raw);
+
+      if (cloudReminders && Array.isArray(cloudReminders.sections) && cloudReminders.sections.length) {
+        const cloudSecs = cloudReminders.sections || [];
+        const cloudItems = cloudReminders.items || [];
+
+        // Scal z ewentualnymi lokalnymi danymi (jeśli użytkownik dodał coś przed połączeniem)
+        const localSecs = (this.reminders && Array.isArray(this.reminders.sections)) ? this.reminders.sections : [];
+        const localItems = (this.reminders && Array.isArray(this.reminders.items)) ? this.reminders.items : [];
+
+        const secMap = new Map();
+        cloudSecs.forEach(s => secMap.set(s.id, s));
+        localSecs.forEach(s => { if (!secMap.has(s.id)) secMap.set(s.id, s); });
+
+        const itemMap = new Map();
+        cloudItems.forEach(i => itemMap.set(i.id, i));
+        localItems.forEach(i => { if (!itemMap.has(i.id)) itemMap.set(i.id, i); });
+
+        const mergedSections = Array.from(secMap.values());
+        const mergedItems = Array.from(itemMap.values());
+
+        this.reminders = {
+          sections: mergedSections,
+          items: mergedItems
+        };
+        localStorage.setItem(this.REMINDERS_KEY, JSON.stringify(this.reminders));
+
+        if (mergedSections.length > cloudSecs.length || mergedItems.length > cloudItems.length) {
+          this.saveReminders();
+        }
+      } else if (!cloudReminders && this.reminders && firebase.auth && firebase.auth().currentUser) {
+        // Jeśli baza w chmurze nie ma jeszcze _reminders, wyślij obecne lokalne
+        this.saveReminders();
+      }
+
       onChange();
     }, (err) => { console.error(err); toast('Brak połączenia z bazą danych'); });
   },
@@ -42,17 +85,26 @@ const Store = {
   stopSync() {
     if (this.unsub) this.unsub();
     this.unsub = null;
-    if (CLOUD_ENABLED) this.data = {};
+    if (CLOUD_ENABLED) {
+      this.data = {};
+      this.reminders = null;
+    }
   },
 
-  /** Zastępuje wszystkie dane w chmurze podanymi. */
+  /** Zastępuje wszystkie dane w chmurze podanymi (nie naruszając przypomnień). */
   replaceAll(newData) {
     this.data = newData;
     if (!CLOUD_ENABLED) return this.save();
     const batch = firebase.firestore().batch();
-    Object.keys(newData).forEach(k => batch.set(this.col().doc(k), newData[k]));
+    Object.keys(newData).forEach(k => {
+      if (k !== '_reminders') batch.set(this.col().doc(k), newData[k]);
+    });
     this.col().get().then(snap => {
-      snap.forEach(doc => { if (!newData[doc.id]) batch.delete(doc.ref); });
+      snap.forEach(doc => {
+        if (doc.id !== '_reminders' && !newData[doc.id]) {
+          batch.delete(doc.ref);
+        }
+      });
       return batch.commit();
     }).catch(() => toast('Nie udało się zapisać w chmurze'));
   },
@@ -189,16 +241,18 @@ const Store = {
       }
     } catch (e) { console.error('Błąd odczytu przypomnień', e); }
     this.reminders = this.defaultReminders();
-    this.saveReminders();
+    if (!CLOUD_ENABLED) {
+      this.saveReminders();
+    }
     return this.reminders;
   },
 
   saveReminders() {
     if (!this.reminders) return;
     localStorage.setItem(this.REMINDERS_KEY, JSON.stringify(this.reminders));
-    if (CLOUD_ENABLED && firebase.firestore) {
+    if (CLOUD_ENABLED && firebase.firestore && firebase.auth && firebase.auth().currentUser) {
       this.col().doc('_reminders').set(JSON.parse(JSON.stringify(this.reminders)))
-        .catch(() => {});
+        .catch((err) => console.error('Błąd zapisu przypomnień w chmurze', err));
     }
   },
 

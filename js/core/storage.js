@@ -45,34 +45,12 @@ const Store = {
 
       this.data = this.normalize(raw);
 
-      if (cloudReminders && Array.isArray(cloudReminders.sections) && cloudReminders.sections.length) {
-        const cloudSecs = cloudReminders.sections || [];
-        const cloudItems = cloudReminders.items || [];
-
-        // Scal z ewentualnymi lokalnymi danymi (jeśli użytkownik dodał coś przed połączeniem)
-        const localSecs = (this.reminders && Array.isArray(this.reminders.sections)) ? this.reminders.sections : [];
-        const localItems = (this.reminders && Array.isArray(this.reminders.items)) ? this.reminders.items : [];
-
-        const secMap = new Map();
-        cloudSecs.forEach(s => secMap.set(s.id, s));
-        localSecs.forEach(s => { if (!secMap.has(s.id)) secMap.set(s.id, s); });
-
-        const itemMap = new Map();
-        cloudItems.forEach(i => itemMap.set(i.id, i));
-        localItems.forEach(i => { if (!itemMap.has(i.id)) itemMap.set(i.id, i); });
-
-        const mergedSections = Array.from(secMap.values());
-        const mergedItems = Array.from(itemMap.values());
-
+      if (cloudReminders && Array.isArray(cloudReminders.sections)) {
         this.reminders = {
-          sections: mergedSections,
-          items: mergedItems
+          sections: cloudReminders.sections,
+          items: Array.isArray(cloudReminders.items) ? cloudReminders.items : []
         };
         localStorage.setItem(this.REMINDERS_KEY, JSON.stringify(this.reminders));
-
-        if (mergedSections.length > cloudSecs.length || mergedItems.length > cloudItems.length) {
-          this.saveReminders();
-        }
       } else if (!cloudReminders && this.reminders && firebase.auth && firebase.auth().currentUser) {
         // Jeśli baza w chmurze nie ma jeszcze _reminders, wyślij obecne lokalne
         this.saveReminders();

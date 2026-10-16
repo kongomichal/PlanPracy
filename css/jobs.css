@@ -78,6 +78,10 @@
   flex: 1;
   overflow-wrap: anywhere;
 }
+.h-note {
+  color: #334155;
+  font-weight: 500;
+}
 .h-line-right {
   display: flex;
   align-items: center;

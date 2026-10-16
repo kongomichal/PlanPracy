@@ -19,7 +19,7 @@ const Hours = {
             key,
             jobIndex,
             personIndex,
-            goal: job.goal,
+            note: p.note || '',
             hours,
             real
           });
@@ -65,17 +65,19 @@ const Hours = {
     const from = $('qhFrom')?.value;
     const to = $('qhTo')?.value;
     const project = $('qhProject')?.value.trim();
+    const note = $('qhNote')?.value.trim() || '';
 
     if (!date || !name || !from || !to) {
       return toast('Wypełnij wymagane pola (data, imię, od, do)');
     }
 
-    const ok = Store.addHoursEntry({ date, name, from, to, project });
+    const ok = Store.addHoursEntry({ date, name, from, to, project, note });
     if (ok) {
       App.render();
       toast(`Zapisano ${fmtHours(hoursBetween(from, to))} dla ${name}`);
       $('qhName').value = '';
       $('qhProject').value = '';
+      if ($('qhNote')) $('qhNote').value = '';
       $('qhName').focus();
     }
   },
@@ -97,6 +99,7 @@ const Hours = {
     if ($('ehFrom')) $('ehFrom').value = person.realFrom || person.from || '07:00';
     if ($('ehTo')) $('ehTo').value = person.realTo || person.to || '15:30';
     if ($('ehProject')) $('ehProject').value = job.place || '';
+    if ($('ehNote')) $('ehNote').value = person.note || '';
 
     this.recalcEditHours();
     openModal('editHoursModal');
@@ -121,6 +124,7 @@ const Hours = {
     const newFrom = $('ehFrom')?.value;
     const newTo = $('ehTo')?.value;
     const newProject = $('ehProject')?.value.trim();
+    const newNote = $('ehNote')?.value.trim() || '';
 
     if (!newDate || !newName || !newFrom || !newTo) {
       return toast('Wypełnij wszystkie wymagane pola');
@@ -137,6 +141,7 @@ const Hours = {
       person.to = newTo;
       person.realFrom = newFrom;
       person.realTo = newTo;
+      person.note = newNote;
       if (newProject) origJob.place = newProject;
       Store.set(origKey, origDay);
     } else {
@@ -147,7 +152,8 @@ const Hours = {
         name: newName,
         from: newFrom,
         to: newTo,
-        project: newProject || origJob.place
+        project: newProject || origJob.place,
+        note: newNote
       });
     }
 
@@ -191,7 +197,7 @@ const Hours = {
                   <div class="h-project"><span>${esc(pn)}</span><span>${fmtHours(proj.total)}</span></div>
                   ${proj.lines.map(l => `
                     <div class="h-line">
-                      <span class="h-line-desc">${this.lineLabel(l)}${l.real ? '' : '<span class="h-plan">plan</span>'}</span>
+                      <span class="h-line-desc">${this.lineLabel(l)}${l.note ? ' · <span class="h-note">' + esc(l.note) + '</span>' : ''}${l.real ? '' : '<span class="h-plan">plan</span>'}</span>
                       <div class="h-line-right">
                         <span class="h-line-val">${fmtHours(l.hours)}</span>
                         <div class="h-line-actions">
@@ -221,7 +227,7 @@ const Hours = {
       const person = people[name];
       const projects = Object.keys(person.projects).sort((a, b) => a.localeCompare(b, 'pl')).map(pn => {
         const proj = person.projects[pn];
-        const lines = proj.lines.map(l => `    ${this.lineLabel(l)}: ${fmtHours(l.hours)}${l.real ? '' : ' (plan)'}`).join('\n');
+        const lines = proj.lines.map(l => `    ${this.lineLabel(l)}: ${fmtHours(l.hours)}${l.note ? ' · ' + l.note : ''}${l.real ? '' : ' (plan)'}`).join('\n');
         return `  ${pn} – ${fmtHours(proj.total)}\n${lines}`;
       }).join('\n');
       return `${name} – RAZEM ${fmtHours(person.total)}\n${projects}`;

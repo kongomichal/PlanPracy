@@ -234,7 +234,7 @@ const Store = {
     }
   },
 
-  addHoursEntry({ date, name, from, to, project }) {
+  addHoursEntry({ date, name, from, to, project, note }) {
     if (!date || !name || !from || !to) return false;
     const day = this.get(date);
     const projName = (project || '').trim() || 'Prace ogólne';
@@ -259,7 +259,8 @@ const Store = {
       from: from,
       to: to,
       realFrom: from,
-      realTo: to
+      realTo: to,
+      note: (note || '').trim()
     });
 
     this.set(date, day);

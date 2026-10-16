@@ -27,7 +27,7 @@
 
 .quick-form-grid {
   display: grid;
-  grid-template-columns: 140px 1.4fr 110px 110px 1.2fr;
+  grid-template-columns: 135px 1.25fr 105px 105px 1.1fr 1.3fr;
   gap: 12px;
   align-items: end;
 }
@@ -83,7 +83,7 @@
   border-radius: 20px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .quick-form-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -107,6 +107,7 @@
   .quick-form-grid .form-group:nth-child(3) { grid-column: 1; }      /* Od */
   .quick-form-grid .form-group:nth-child(4) { grid-column: 2; }      /* Do */
   .quick-form-grid .form-group:nth-child(5) { grid-column: 1 / -1; } /* Projekt */
+  .quick-form-grid .form-group:nth-child(6) { grid-column: 1 / -1; } /* Notatka */
 
   .quick-hours-actions {
     flex-direction: column;

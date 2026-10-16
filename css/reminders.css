@@ -101,15 +101,66 @@
 .rem-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
+}
+.rem-card-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rem-sec-dot-lg {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
 }
 .rem-card-header h3 {
   font-size: 20px;
   font-weight: 800;
   color: #0f172a;
+}
+.rem-sec-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Wybór koloru listy w oknie edycji */
+.rem-colors-picker {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.rem-color-option {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 15px;
+  font-weight: bold;
+}
+.rem-color-option:hover {
+  transform: scale(1.1);
+}
+.rem-color-option.selected {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9) inset;
+  transform: scale(1.08);
 }
 
 /* Formularz szybkiego dodawania zadania */
@@ -295,6 +346,16 @@
   .archive-section {
     padding: 14px;
     border-radius: 14px;
+  }
+  .rem-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .rem-sec-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
   }
   .rem-card-header h3 {
     font-size: 18.5px;

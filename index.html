@@ -11,14 +11,14 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Muraven – prosty plan pracy, rejestracja godzin i przypomnienia.">
   <title>Muraven – Plan pracy</title>
-  <link rel="stylesheet" href="css/base.css?v=8">
-  <link rel="stylesheet" href="css/layout.css?v=8">
-  <link rel="stylesheet" href="css/components.css?v=8">
-  <link rel="stylesheet" href="css/modals.css?v=8">
-  <link rel="stylesheet" href="css/jobs.css?v=8">
-  <link rel="stylesheet" href="css/dashboard.css?v=8">
-  <link rel="stylesheet" href="css/reminders.css?v=8">
-  <link rel="stylesheet" href="css/hours.css?v=8">
+  <link rel="stylesheet" href="css/base.css?v=9">
+  <link rel="stylesheet" href="css/layout.css?v=9">
+  <link rel="stylesheet" href="css/components.css?v=9">
+  <link rel="stylesheet" href="css/modals.css?v=9">
+  <link rel="stylesheet" href="css/jobs.css?v=9">
+  <link rel="stylesheet" href="css/dashboard.css?v=9">
+  <link rel="stylesheet" href="css/reminders.css?v=9">
+  <link rel="stylesheet" href="css/hours.css?v=9">
 </head>
 <body>
 
@@ -234,7 +234,14 @@
         <!-- Główna karta z zadaniami -->
         <div class="reminders-card">
           <div class="rem-card-header">
-            <h3 id="remindersSectionTitle">Wszystkie przypomnienia</h3>
+            <div class="rem-card-title-wrap">
+              <span id="remindersSectionDot" class="rem-sec-dot-lg" hidden></span>
+              <h3 id="remindersSectionTitle">Wszystkie przypomnienia</h3>
+            </div>
+            <div id="remindersSectionActions" class="rem-sec-actions" hidden>
+              <button type="button" id="editCurSecBtn" class="btn small" title="Edytuj nazwę i kolor tej listy">✏️ Zmień nazwę</button>
+              <button type="button" id="deleteCurSecBtn" class="btn small danger" title="Usuń tę listę">🗑️ Usuń listę</button>
+            </div>
           </div>
 
           <!-- Szybkie dodawanie nowego przypomnienia -->
@@ -409,6 +416,39 @@
     </div>
   </div>
 
+  <!-- ============ EDYCJA / DODAWANIE LISTY PRZYPOMNIEŃ ============ -->
+  <div id="remSectionModal" class="modal">
+    <div class="modal-box small-box">
+      <div class="modal-head">
+        <h2 id="remSecModalTitle">Edytuj listę przypomnień</h2>
+        <button type="button" class="btn icon" data-close aria-label="Zamknij">✕</button>
+      </div>
+      <form id="remSectionForm">
+        <div class="modal-body">
+          <input type="hidden" id="remSecId">
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="remSecNameInput">Nazwa listy</label>
+            <input type="text" id="remSecNameInput" placeholder="np. Materiały, Zakupy, Ekipa Sławka" required autocomplete="off">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label>Kolor listy</label>
+            <div id="remSecColorsPicker" class="rem-colors-picker"></div>
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" id="remSecModalDeleteBtn" class="btn danger" hidden>Usuń tę listę</button>
+          <div class="row">
+            <button type="button" class="btn" data-close>Anuluj</button>
+            <button type="submit" class="btn primary">Zapisz</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Karta podglądu po najechaniu na kafelek -->
   <div id="hoverCard" class="hover-card" hidden></div>
 
@@ -455,19 +495,19 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=8"></script>
-  <script src="js/core/utils.js?v=8"></script>
-  <script src="js/core/sample-data.js?v=8"></script>
-  <script src="js/core/storage.js?v=8"></script>
-  <script src="js/features/auth.js?v=8"></script>
-  <script src="js/features/plan.js?v=8"></script>
-  <script src="js/features/day-editor.js?v=8"></script>
-  <script src="js/features/items.js?v=8"></script>
-  <script src="js/features/people.js?v=8"></script>
-  <script src="js/features/hours.js?v=8"></script>
-  <script src="js/features/reminders.js?v=8"></script>
-  <script src="js/features/job-view.js?v=8"></script>
-  <script src="js/features/menu.js?v=8"></script>
-  <script src="js/main.js?v=8"></script>
+  <script src="js/core/firebase-config.js?v=9"></script>
+  <script src="js/core/utils.js?v=9"></script>
+  <script src="js/core/sample-data.js?v=9"></script>
+  <script src="js/core/storage.js?v=9"></script>
+  <script src="js/features/auth.js?v=9"></script>
+  <script src="js/features/plan.js?v=9"></script>
+  <script src="js/features/day-editor.js?v=9"></script>
+  <script src="js/features/items.js?v=9"></script>
+  <script src="js/features/people.js?v=9"></script>
+  <script src="js/features/hours.js?v=9"></script>
+  <script src="js/features/reminders.js?v=9"></script>
+  <script src="js/features/job-view.js?v=9"></script>
+  <script src="js/features/menu.js?v=9"></script>
+  <script src="js/main.js?v=9"></script>
 </body>
 </html>

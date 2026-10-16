@@ -1,5 +1,5 @@
 /* Zakładka / Moduł "Przypomnienia" na wzór iCloud:
-   - Sekcje (kategorie)
+   - Sekcje / Listy z edycją nazw, kolorów i usuwaniem
    - Przypomnienia główne
    - Przypomnienia zagnieżdżone (przypomnienie w przypomnienie)
    - Odklikiwanie (przenoszenie do Archiwum)
@@ -7,6 +7,8 @@
 const Reminders = {
   currentSectionId: 'all',
   showArchive: false,
+  modalSelectedColor: '#2563eb',
+  REM_COLORS: ['#2563eb', '#16a34a', '#ea580c', '#9333ea', '#db2777', '#0891b2', '#ca8a04', '#dc2626', '#475569'],
 
   data() {
     return Store.reminders || Store.loadReminders();
@@ -25,33 +27,105 @@ const Reminders = {
     return items.filter(i => !i.done).length;
   },
 
-  /* ---------- Sekcje ---------- */
-  addSection(name) {
-    const clean = (name || '').trim();
-    if (!clean) return;
-    const colors = ['#2563eb', '#16a34a', '#ea580c', '#9333ea', '#db2777', '#0891b2', '#ca8a04'];
-    const color = colors[this.data().sections.length % colors.length];
-    const newSec = {
-      id: 'sec-' + Date.now(),
-      name: clean,
-      color: color
-    };
-    this.data().sections.push(newSec);
-    this.currentSectionId = newSec.id;
-    this.save();
-    toast(`Dodano sekcję „${clean}”`);
+  /* ---------- Sekcje (Listy przypomnień) ---------- */
+  openSectionModal(secId = null) {
+    const isEdit = !!secId;
+    const sec = isEdit ? this.data().sections.find(s => s.id === secId) : null;
+
+    const titleEl = $('remSecModalTitle');
+    if (titleEl) titleEl.textContent = isEdit ? 'Edytuj listę przypomnień' : 'Nowa lista przypomnień';
+
+    const idInput = $('remSecId');
+    if (idInput) idInput.value = isEdit ? sec.id : '';
+
+    const nameInput = $('remSecNameInput');
+    if (nameInput) nameInput.value = isEdit ? sec.name : '';
+
+    this.modalSelectedColor = isEdit ? (sec.color || '#2563eb') : this.REM_COLORS[this.data().sections.length % this.REM_COLORS.length];
+    this.renderColorsPicker();
+
+    const delBtn = $('remSecModalDeleteBtn');
+    if (delBtn) delBtn.hidden = !isEdit;
+
+    openModal('remSectionModal');
+    if (nameInput) setTimeout(() => nameInput.focus(), 80);
+  },
+
+  renderColorsPicker() {
+    const picker = $('remSecColorsPicker');
+    if (!picker) return;
+    picker.innerHTML = this.REM_COLORS.map(c => `
+      <button type="button" class="rem-color-option ${c === this.modalSelectedColor ? 'selected' : ''}"
+        data-color="${c}" style="background:${c}" title="Wybierz ten kolor">
+        ${c === this.modalSelectedColor ? '✓' : ''}
+      </button>
+    `).join('');
+  },
+
+  saveSectionFromModal(e) {
+    if (e) e.preventDefault();
+    const idInput = $('remSecId');
+    const nameInput = $('remSecNameInput');
+    const name = (nameInput?.value || '').trim();
+    if (!name) return toast('Wpisz nazwę listy');
+
+    const secId = idInput?.value;
+    const color = this.modalSelectedColor || '#2563eb';
+
+    if (secId) {
+      // Edycja istniejącej listy
+      const sec = this.data().sections.find(s => s.id === secId);
+      if (!sec) return;
+      sec.name = name;
+      sec.color = color;
+      this.save();
+      closeModal('remSectionModal');
+      toast(`Zmieniono nazwę listy na „${name}”`);
+    } else {
+      // Nowa lista
+      const newSec = {
+        id: 'sec-' + Date.now(),
+        name: name,
+        color: color
+      };
+      this.data().sections.push(newSec);
+      this.currentSectionId = newSec.id;
+      this.save();
+      closeModal('remSectionModal');
+      toast(`Dodano nową listę „${name}”`);
+    }
   },
 
   removeSection(secId) {
-    if (!confirm('Usunąć tę sekcję i przenieść jej przypomnienia do sekcji Ogólne?')) return;
     const d = this.data();
+    const sec = d.sections.find(s => s.id === secId);
+    if (!sec) return;
+
+    if (d.sections.length <= 1) {
+      alert('Nie można usunąć ostatniej listy przypomnień.');
+      return;
+    }
+
+    const itemsCount = d.items.filter(i => i.sectionId === secId).length;
+    const fallbackSec = d.sections.find(s => s.id !== secId);
+    const msg = itemsCount > 0
+      ? `Czy na pewno usunąć listę „${sec.name}”?\nZnajduje się w niej ${itemsCount} przypomnień – zostaną one przeniesione do listy „${fallbackSec.name}”.`
+      : `Czy na pewno chcesz usunąć listę „${sec.name}”?`;
+
+    if (!confirm(msg)) return;
+
     d.sections = d.sections.filter(s => s.id !== secId);
     d.items.forEach(i => {
-      if (i.sectionId === secId) i.sectionId = d.sections[0]?.id || 'sec-general';
+      if (i.sectionId === secId) i.sectionId = fallbackSec.id;
     });
-    if (this.currentSectionId === secId) this.currentSectionId = 'all';
+
+    if (this.currentSectionId === secId) {
+      this.currentSectionId = fallbackSec.id;
+    }
+
     this.save();
-    toast('Sekcja usunięta');
+    closeModal('remSectionModal');
+    toast(`Usunięto listę „${sec.name}”`);
   },
 
   /* ---------- Przypomnienia ---------- */
@@ -142,7 +216,7 @@ const Reminders = {
         `;
       }).join('');
 
-      html += `<button type="button" class="btn small rem-add-sec-btn" id="addRemSectionBtn">+ Nowa sekcja</button>`;
+      html += `<button type="button" class="btn small rem-add-sec-btn" id="addRemSectionBtn">+ Nowa lista</button>`;
       sectionsBar.innerHTML = html;
     }
 
@@ -154,10 +228,40 @@ const Reminders = {
 
     const archivedItems = items.filter(i => i.done);
 
+    // Nagłówek aktualnej listy i przyciski edycji/usuwania
     const curSec = sections.find(s => s.id === this.currentSectionId);
     const titleEl = $('remindersSectionTitle');
-    if (titleEl) {
-      titleEl.textContent = this.currentSectionId === 'all' ? 'Wszystkie przypomnienia' : (curSec?.name || 'Przypomnienia');
+    const dotEl = $('remindersSectionDot');
+    const actionsEl = $('remindersSectionActions');
+
+    if (this.currentSectionId === 'all') {
+      if (titleEl) {
+        titleEl.textContent = 'Wszystkie przypomnienia';
+        titleEl.style.cursor = 'default';
+        titleEl.title = '';
+      }
+      if (dotEl) {
+        dotEl.hidden = false;
+        dotEl.style.background = '#2563eb';
+      }
+      if (actionsEl) actionsEl.hidden = true;
+    } else {
+      if (titleEl) {
+        titleEl.textContent = curSec?.name || 'Przypomnienia';
+        titleEl.style.cursor = 'pointer';
+        titleEl.title = 'Kliknij, aby zmienić nazwę listy';
+      }
+      if (dotEl) {
+        dotEl.hidden = false;
+        dotEl.style.background = curSec?.color || '#2563eb';
+      }
+      if (actionsEl) {
+        actionsEl.hidden = false;
+        const editBtn = $('editCurSecBtn');
+        const delBtn = $('deleteCurSecBtn');
+        if (editBtn) editBtn.dataset.secId = curSec?.id || '';
+        if (delBtn) delBtn.dataset.secId = curSec?.id || '';
+      }
     }
 
     const listEl = $('remindersActiveList');
@@ -235,12 +339,47 @@ const Reminders = {
           return;
         }
         if (e.target.closest('#addRemSectionBtn')) {
-          const name = prompt('Nazwa nowej sekcji przypomnień (np. Hurtownia, Narzędzia):');
-          if (name) this.addSection(name);
+          this.openSectionModal(null);
           return;
         }
       });
     }
+
+    // Edycja i usuwanie z poziomu nagłówka listy
+    $('editCurSecBtn')?.addEventListener('click', () => {
+      if (this.currentSectionId !== 'all') {
+        this.openSectionModal(this.currentSectionId);
+      }
+    });
+
+    $('deleteCurSecBtn')?.addEventListener('click', () => {
+      if (this.currentSectionId !== 'all') {
+        this.removeSection(this.currentSectionId);
+      }
+    });
+
+    $('remindersSectionTitle')?.addEventListener('click', () => {
+      if (this.currentSectionId !== 'all') {
+        this.openSectionModal(this.currentSectionId);
+      }
+    });
+
+    // Formularz modala edycji/dodawania listy
+    $('remSectionForm')?.addEventListener('submit', (e) => this.saveSectionFromModal(e));
+
+    $('remSecModalDeleteBtn')?.addEventListener('click', () => {
+      const secId = $('remSecId')?.value;
+      if (secId) this.removeSection(secId);
+    });
+
+    // Wybór koloru w modalu
+    $('remSecColorsPicker')?.addEventListener('click', (e) => {
+      const colorBtn = e.target.closest('[data-color]');
+      if (colorBtn) {
+        this.modalSelectedColor = colorBtn.dataset.color;
+        this.renderColorsPicker();
+      }
+    });
 
     const addForm = $('remAddForm');
     if (addForm) {

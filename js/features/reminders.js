@@ -129,10 +129,24 @@ const Reminders = {
   },
 
   /* ---------- Przypomnienia ---------- */
+  getSectionBadge(sectionId) {
+    if (!sectionId) return '';
+    const sec = (this.data().sections || []).find(s => s.id === sectionId);
+    if (!sec) return '';
+    const color = sec.color || '#2563eb';
+    return `
+      <span class="rem-sec-badge" data-switch-sec="${sec.id}" style="color:${color}; background:${color}18; border-color:${color}40;" title="Lista: ${esc(sec.name)} (kliknij, aby otworzyć tę listę)">
+        <span class="rem-sec-badge-dot" style="background:${color}"></span>
+        <span class="rem-sec-badge-name">${esc(sec.name)}</span>
+      </span>
+    `;
+  },
+
   addItem(text, sectionId = null, parentId = null) {
     const clean = (text || '').trim();
     if (!clean) return;
-    const secId = sectionId || (this.currentSectionId !== 'all' ? this.currentSectionId : (this.data().sections[0]?.id || 'sec-general'));
+    const parent = parentId ? this.data().items.find(p => p.id === parentId) : null;
+    const secId = sectionId || (parent ? parent.sectionId : null) || (this.currentSectionId !== 'all' ? this.currentSectionId : (this.data().sections[0]?.id || 'sec-general'));
     const item = {
       id: 'rem-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
       sectionId: secId,
@@ -264,6 +278,18 @@ const Reminders = {
       }
     }
 
+    const secSelect = $('remAddSecSelect');
+    if (secSelect) {
+      if (this.currentSectionId === 'all' && sections.length > 0) {
+        secSelect.hidden = false;
+        secSelect.innerHTML = sections.map(s => `
+          <option value="${s.id}">${esc(s.name)}</option>
+        `).join('');
+      } else {
+        secSelect.hidden = true;
+      }
+    }
+
     const listEl = $('remindersActiveList');
     if (listEl) {
       const rootItems = activeItems.filter(i => !i.parentId || !activeItems.some(p => p.id === i.parentId));
@@ -290,14 +316,21 @@ const Reminders = {
               <button type="button" class="btn small danger" id="clearArchiveBtn">Wyczyść archiwum</button>
             </div>
             <div class="archive-items-list">
-              ${archivedItems.map(i => `
-                <div class="rem-item rem-item-done" data-id="${i.id}">
-                  <button type="button" class="rem-checkbox checked" data-toggle-rem="${i.id}" title="Przywróć na listę aktywnych">✓</button>
-                  <span class="rem-text">${esc(i.text)}</span>
-                  <span class="muted small">${i.doneAt ? shortDate(new Date(i.doneAt)) : ''}</span>
-                  <button type="button" class="btn small icon" data-remove-rem="${i.id}" title="Usuń na stałe">✕</button>
-                </div>
-              `).join('')}
+              ${archivedItems.map(i => {
+                const itemSecId = i.sectionId || (i.parentId ? archivedItems.find(p => p.id === i.parentId)?.sectionId : null);
+                const badgeHtml = this.getSectionBadge(itemSecId);
+                return `
+                  <div class="rem-item rem-item-done" data-id="${i.id}">
+                    <button type="button" class="rem-checkbox checked" data-toggle-rem="${i.id}" title="Przywróć na listę aktywnych">✓</button>
+                    <div class="rem-content-col">
+                      <span class="rem-text">${esc(i.text)}</span>
+                      ${badgeHtml}
+                    </div>
+                    <span class="muted small">${i.doneAt ? shortDate(new Date(i.doneAt)) : ''}</span>
+                    <button type="button" class="btn small icon" data-remove-rem="${i.id}" title="Usuń na stałe">✕</button>
+                  </div>
+                `;
+              }).join('')}
             </div>
           `;
         }
@@ -313,11 +346,18 @@ const Reminders = {
          </div>`
       : '';
 
+    const showBadge = this.currentSectionId === 'all';
+    const itemSecId = item.sectionId || (item.parentId ? allActive.find(p => p.id === item.parentId)?.sectionId : null);
+    const badgeHtml = showBadge ? this.getSectionBadge(itemSecId) : '';
+
     return `
       <div class="rem-item-wrap ${depth > 0 ? 'rem-nested' : ''}">
         <div class="rem-item" data-id="${item.id}">
           <button type="button" class="rem-checkbox" data-toggle-rem="${item.id}" title="Odkliknij (przenieś do archiwum)"></button>
-          <span class="rem-text">${esc(item.text)}</span>
+          <div class="rem-content-col">
+            <span class="rem-text">${esc(item.text)}</span>
+            ${badgeHtml}
+          </div>
           <div class="rem-item-actions">
             <button type="button" class="btn small rem-add-sub-btn" data-add-sub="${item.id}" title="Włóż przypomnienie w przypomnienie">+ Podzadanie</button>
             <button type="button" class="btn small icon rem-remove-btn" data-remove-rem="${item.id}" title="Usuń przypomnienie">✕</button>
@@ -386,8 +426,11 @@ const Reminders = {
       addForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const input = $('remAddInput');
-        if (input && input.value.trim()) {
-          this.addItem(input.value.trim());
+        const text = input ? input.value.trim() : '';
+        if (text) {
+          const secSelect = $('remAddSecSelect');
+          const chosenSecId = (this.currentSectionId === 'all' && secSelect && !secSelect.hidden) ? secSelect.value : null;
+          this.addItem(text, chosenSecId);
           input.value = '';
           input.focus();
         }
@@ -397,6 +440,16 @@ const Reminders = {
     const activeList = $('remindersActiveList');
     if (activeList) {
       activeList.addEventListener('click', (e) => {
+        const switchSecBtn = e.target.closest('[data-switch-sec]');
+        if (switchSecBtn) {
+          const targetSecId = switchSecBtn.dataset.switchSec;
+          if (targetSecId) {
+            this.currentSectionId = targetSecId;
+            this.render();
+            return;
+          }
+        }
+
         const toggleBtn = e.target.closest('[data-toggle-rem]');
         if (toggleBtn) {
           return this.toggleDone(toggleBtn.dataset.toggleRem, true);
@@ -429,6 +482,16 @@ const Reminders = {
     const archiveBox = $('remindersArchiveBox');
     if (archiveBox) {
       archiveBox.addEventListener('click', (e) => {
+        const switchSecBtn = e.target.closest('[data-switch-sec]');
+        if (switchSecBtn) {
+          const targetSecId = switchSecBtn.dataset.switchSec;
+          if (targetSecId) {
+            this.currentSectionId = targetSecId;
+            this.render();
+            return;
+          }
+        }
+
         const toggleBtn = e.target.closest('[data-toggle-rem]');
         if (toggleBtn) {
           return this.toggleDone(toggleBtn.dataset.toggleRem, false);

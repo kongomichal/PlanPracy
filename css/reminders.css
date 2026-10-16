@@ -185,7 +185,7 @@
 
 .rem-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 10px 8px;
   border-bottom: 1px solid #f1f5f9;
@@ -201,6 +201,7 @@
   width: 28px;
   height: 28px;
   min-width: 28px;
+  margin-top: 1px;
   border-radius: 50%;
   border: 2px solid #94a3b8;
   background: #ffffff;
@@ -228,12 +229,72 @@
   color: #ffffff;
 }
 
-.rem-text {
+/* Kolumna z tekstem i plakietką sekcji */
+.rem-content-col {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+
+.rem-text {
   font-size: 15.5px;
   font-weight: 500;
   color: #1e293b;
   overflow-wrap: anywhere;
+}
+
+/* Plakietka listy/sekcji w liście ogólnej */
+.rem-sec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5.5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 8.5px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  user-select: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  line-height: 1.25;
+}
+.rem-sec-badge:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.92);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.rem-sec-badge:active {
+  transform: scale(0.96);
+}
+.rem-sec-badge-dot {
+  width: 7.5px;
+  height: 7.5px;
+  min-width: 7.5px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.rem-sec-badge-name {
+  line-height: 1.2;
+}
+
+/* Selektor listy w formularzu szybkiego dodawania */
+.rem-add-sec-select {
+  padding: 10px 12px;
+  font-size: 14.5px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 600;
+  min-width: 130px;
+  cursor: pointer;
 }
 
 .rem-item-actions {
@@ -241,6 +302,7 @@
   align-items: center;
   gap: 6px;
   opacity: 0.85;
+  margin-top: 1px;
   transition: opacity 0.15s ease;
 }
 .rem-item:hover .rem-item-actions {
@@ -375,5 +437,12 @@
     font-size: 12px;
     padding: 4px 8px;
     white-space: nowrap;
+  }
+  .rem-add-form {
+    flex-wrap: wrap;
+  }
+  .rem-add-sec-select {
+    width: 100%;
+    min-width: 100%;
   }
 }

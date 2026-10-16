@@ -11,14 +11,14 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Muraven – prosty plan pracy, rejestracja godzin i przypomnienia.">
   <title>Muraven – Plan pracy</title>
-  <link rel="stylesheet" href="css/base.css?v=10">
-  <link rel="stylesheet" href="css/layout.css?v=10">
-  <link rel="stylesheet" href="css/components.css?v=10">
-  <link rel="stylesheet" href="css/modals.css?v=10">
-  <link rel="stylesheet" href="css/jobs.css?v=10">
-  <link rel="stylesheet" href="css/dashboard.css?v=12">
-  <link rel="stylesheet" href="css/reminders.css?v=10">
-  <link rel="stylesheet" href="css/hours.css?v=10">
+  <link rel="stylesheet" href="css/base.css?v=14">
+  <link rel="stylesheet" href="css/layout.css?v=14">
+  <link rel="stylesheet" href="css/components.css?v=14">
+  <link rel="stylesheet" href="css/modals.css?v=14">
+  <link rel="stylesheet" href="css/jobs.css?v=14">
+  <link rel="stylesheet" href="css/dashboard.css?v=14">
+  <link rel="stylesheet" href="css/reminders.css?v=14">
+  <link rel="stylesheet" href="css/hours.css?v=14">
 </head>
 <body>
 
@@ -129,10 +129,7 @@
     <!-- RZECZY -->
     <section id="view-items" class="view">
       <div class="view-head">
-        <div>
-          <h2>Rzeczy do przygotowania</h2>
-          <p class="muted">Rusztowania, narzędzia, dokumenty i materiały z najbliższych 30 dni.</p>
-        </div>
+        <h2>Rzeczy do przygotowania</h2>
         <div class="row">
           <label class="check"><input type="checkbox" id="onlyTodo" checked> tylko niezałatwione</label>
           <button id="copyItemsBtn" class="btn">Kopiuj listę</button>
@@ -144,10 +141,7 @@
     <!-- EKIPA -->
     <section id="view-people" class="view">
       <div class="view-head">
-        <div>
-          <h2>Ekipa</h2>
-          <p class="muted">Kto, gdzie i w jakich godzinach pracuje w bieżącym okresie.</p>
-        </div>
+        <h2>Ekipa</h2>
       </div>
       <div id="peopleList" class="people-grid"></div>
     </section>
@@ -156,10 +150,7 @@
     <section id="view-hours" class="view">
       <div class="hours-wrap">
         <div class="view-head">
-          <div>
-            <h2>Dodaj godziny i podsumowanie</h2>
-            <p class="muted">Wprowadź czas pracy pracownika (imię, od, do) – system automatycznie doda go do rozliczenia.</p>
-          </div>
+          <h2>Dodaj godziny i podsumowanie</h2>
         </div>
 
         <!-- Wzornik szybkiego dodawania godzin -->
@@ -206,7 +197,6 @@
             <button id="copyHoursBtn" class="btn">Kopiuj jako tekst</button>
           </div>
         </div>
-        <p class="muted small" style="margin-bottom:12px">Liczone są godziny rzeczywiste. Gdy ich nie wpisano, brany jest plan (oznaczony szarym „plan”).</p>
         <div id="hoursList"></div>
       </div>
     </section>
@@ -215,10 +205,7 @@
     <section id="view-reminders" class="view">
       <div class="reminders-wrap">
         <div class="reminders-head">
-          <div>
-            <h2>Przypomnienia</h2>
-            <p class="muted">Listy zadań i spraw do załatwienia w stylu iCloud z sekcjami, podzadaniami i archiwum.</p>
-          </div>
+          <h2>Przypomnienia</h2>
         </div>
 
         <!-- Pasek sekcji (kategorii) -->
@@ -239,6 +226,7 @@
 
           <!-- Szybkie dodawanie nowego przypomnienia -->
           <form id="remAddForm" class="rem-add-form">
+            <select id="remAddSecSelect" class="rem-add-sec-select" hidden title="Wybierz listę docelową"></select>
             <input type="text" id="remAddInput" class="rem-add-input" placeholder="+ Dodaj nowe przypomnienie... (Wpisz treść i naciśnij Enter)">
             <button type="submit" class="btn primary">Dodaj</button>
           </form>
@@ -488,19 +476,19 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=13"></script>
-  <script src="js/core/utils.js?v=13"></script>
-  <script src="js/core/sample-data.js?v=13"></script>
-  <script src="js/core/storage.js?v=13"></script>
-  <script src="js/features/auth.js?v=13"></script>
-  <script src="js/features/plan.js?v=13"></script>
-  <script src="js/features/day-editor.js?v=13"></script>
-  <script src="js/features/items.js?v=13"></script>
-  <script src="js/features/people.js?v=13"></script>
-  <script src="js/features/hours.js?v=13"></script>
-  <script src="js/features/reminders.js?v=13"></script>
-  <script src="js/features/job-view.js?v=13"></script>
-  <script src="js/features/menu.js?v=13"></script>
-  <script src="js/main.js?v=13"></script>
+  <script src="js/core/firebase-config.js?v=14"></script>
+  <script src="js/core/utils.js?v=14"></script>
+  <script src="js/core/sample-data.js?v=14"></script>
+  <script src="js/core/storage.js?v=14"></script>
+  <script src="js/features/auth.js?v=14"></script>
+  <script src="js/features/plan.js?v=14"></script>
+  <script src="js/features/day-editor.js?v=14"></script>
+  <script src="js/features/items.js?v=14"></script>
+  <script src="js/features/people.js?v=14"></script>
+  <script src="js/features/hours.js?v=14"></script>
+  <script src="js/features/reminders.js?v=14"></script>
+  <script src="js/features/job-view.js?v=14"></script>
+  <script src="js/features/menu.js?v=14"></script>
+  <script src="js/main.js?v=14"></script>
 </body>
 </html>

@@ -104,18 +104,11 @@
   font-size: 21px;
   font-weight: 800;
   color: #0f172a;
-  margin-bottom: 6px;
+  margin-bottom: 16px;
 }
 .dash-card-main .dash-card-title {
   font-size: 24px;
-}
-
-.dash-card-desc {
-  font-size: 14.5px;
-  color: var(--muted);
-  line-height: 1.45;
   margin-bottom: 18px;
-  flex: 1;
 }
 
 .dash-card-footer {
@@ -189,9 +182,6 @@
   }
   .dash-card-main .dash-card-title {
     font-size: 21px;
-  }
-  .dash-card-desc {
-    font-size: 14px;
     margin-bottom: 14px;
   }
 }

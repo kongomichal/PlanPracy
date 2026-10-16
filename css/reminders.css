@@ -1,4 +1,4 @@
-/* Styl Przypomnień na wzór iCloud (Apple Reminders) */
+/* Styl Przypomnień na wzór iCloud (Apple Reminders) zoptymalizowany pod telefony */
 .reminders-wrap {
   max-width: 960px;
   margin: 0 auto;
@@ -10,7 +10,7 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 /* Pasek sekcji (kategorii) */
@@ -18,8 +18,13 @@
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 6px;
-  margin-bottom: 18px;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.rem-sections-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .rem-section-tab {
@@ -29,6 +34,7 @@
   background: var(--card);
   border: 1px solid var(--line);
   padding: 8px 14px;
+  min-height: 38px;
   border-radius: 20px;
   font: inherit;
   font-size: 14.5px;
@@ -37,10 +43,15 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .rem-section-tab:hover {
   border-color: var(--accent);
+}
+.rem-section-tab:active {
+  transform: scale(0.97);
 }
 
 .rem-section-tab.active {
@@ -73,6 +84,8 @@
   border-radius: 20px;
   font-size: 13.5px;
   font-weight: 600;
+  min-height: 38px;
+  padding: 6px 14px;
 }
 
 /* Karta z listą zadań */
@@ -103,12 +116,12 @@
 .rem-add-form {
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 .rem-add-input {
   flex: 1;
-  padding: 12px 14px;
-  font-size: 15px;
+  padding: 11px 14px;
+  font-size: 16px;
   border: 1px solid var(--line);
   border-radius: 10px;
 }
@@ -123,7 +136,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 8px;
+  padding: 10px 8px;
   border-bottom: 1px solid #f1f5f9;
   transition: background 0.15s ease;
   border-radius: 8px;
@@ -134,9 +147,9 @@
 
 /* Okrągły checkbox w stylu iCloud */
 .rem-checkbox {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
   border-radius: 50%;
   border: 2px solid #94a3b8;
   background: #ffffff;
@@ -144,14 +157,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 14px;
   color: transparent;
   transition: all 0.15s ease;
   padding: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .rem-checkbox:hover {
   border-color: var(--accent);
   background: #eff6ff;
+}
+.rem-checkbox:active {
+  transform: scale(0.92);
 }
 .rem-checkbox.checked {
   background: var(--accent);
@@ -171,7 +189,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  opacity: 0.7;
+  opacity: 0.85;
   transition: opacity 0.15s ease;
 }
 .rem-item:hover .rem-item-actions {
@@ -179,11 +197,13 @@
 }
 
 .rem-add-sub-btn {
-  font-size: 12.5px;
+  font-size: 13px;
   background: #f1f5f9;
   border-color: #e2e8f0;
   font-weight: 600;
   color: #475569;
+  min-height: 34px;
+  padding: 4px 10px;
 }
 .rem-add-sub-btn:hover {
   background: #e2e8f0;
@@ -192,6 +212,11 @@
 
 .rem-remove-btn {
   color: var(--muted);
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
 }
 .rem-remove-btn:hover {
   color: var(--red);
@@ -199,8 +224,8 @@
 
 /* Przypomnienie zagnieżdżone (włożone w inne przypomnienie) */
 .rem-nested {
-  margin-left: 28px;
-  padding-left: 12px;
+  margin-left: 24px;
+  padding-left: 10px;
   border-left: 2px solid #e2e8f0;
 }
 .rem-nested .rem-item {
@@ -211,9 +236,10 @@
   color: #334155;
 }
 .rem-nested .rem-checkbox {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  font-size: 12px;
 }
 
 .rem-empty {
@@ -257,4 +283,36 @@
 .rem-item-done .rem-text {
   text-decoration: line-through;
   color: var(--muted);
+}
+
+/* Dostosowania mobilne dla modułu Przypomnienia */
+@media (max-width: 600px) {
+  .reminders-card {
+    padding: 14px;
+    border-radius: 14px;
+    margin-bottom: 18px;
+  }
+  .archive-section {
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .rem-card-header h3 {
+    font-size: 18.5px;
+  }
+  .rem-nested {
+    margin-left: 12px;
+    padding-left: 8px;
+  }
+  .rem-item {
+    gap: 10px;
+    padding: 9px 4px;
+  }
+  .rem-item-actions {
+    opacity: 1 !important; /* Na telefonie akcje są zawsze wyraźnie widoczne (brak hover) */
+  }
+  .rem-add-sub-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
 }

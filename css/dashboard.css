@@ -1,21 +1,21 @@
-/* Ekran główny – 3 kafelki na wejściu */
+/* Ekran główny – 3 kafelki na wejściu zoptymalizowane pod telefony */
 .dashboard-container {
   max-width: 1100px;
-  margin: 12px auto 40px;
+  margin: 12px auto 36px;
   padding: 0 16px;
 }
 
 .dashboard-header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .dashboard-header h2 {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.5px;
 }
 .dashboard-header p {
-  font-size: 16px;
+  font-size: 15.5px;
   color: var(--muted);
   margin-top: 4px;
 }
@@ -23,7 +23,7 @@
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* Podstawowy kafelek */
@@ -31,20 +31,27 @@
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 24px;
+  padding: 22px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .dash-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
   border-color: var(--accent);
-  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
+}
+.dash-card:active {
+  transform: scale(0.985);
+  background: #f8fafc;
 }
 
 /* Największy kafelek: PLAN PRACY */
@@ -52,7 +59,7 @@
   grid-column: 1 / -1;
   background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
   border: 2px solid #cbd5e1;
-  padding: 30px;
+  padding: 26px;
 }
 .dash-card-main:hover {
   border-color: var(--accent);
@@ -60,27 +67,27 @@
 
 .dash-card-badge {
   position: absolute;
-  top: 18px;
-  right: 18px;
+  top: 16px;
+  right: 16px;
   background: var(--accent-soft);
   color: var(--accent-dark);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .dash-card-icon {
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
-  margin-bottom: 16px;
+  font-size: 25px;
+  margin-bottom: 14px;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
 }
@@ -94,20 +101,20 @@
 }
 
 .dash-card-title {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 800;
   color: #0f172a;
   margin-bottom: 6px;
 }
 .dash-card-main .dash-card-title {
-  font-size: 26px;
+  font-size: 24px;
 }
 
 .dash-card-desc {
-  font-size: 15px;
+  font-size: 14.5px;
   color: var(--muted);
   line-height: 1.45;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   flex: 1;
 }
 
@@ -116,12 +123,12 @@
   align-items: center;
   justify-content: space-between;
   border-top: 1px solid var(--line);
-  padding-top: 14px;
+  padding-top: 12px;
   margin-top: auto;
 }
 
 .dash-stat {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
   color: #334155;
   background: var(--gray-soft);
@@ -142,10 +149,11 @@
 /* Przycisk powrotu w topbarze */
 .back-to-dash-btn {
   font-weight: 700;
-  font-size: 14px;
-  gap: 6px;
+  font-size: 13.5px;
+  gap: 5px;
   background: var(--gray-soft);
   border-color: var(--line);
+  padding: 6px 12px;
 }
 .back-to-dash-btn:hover {
   background: #dfe3ea;
@@ -158,10 +166,32 @@
 }
 
 @media (max-width: 650px) {
+  .dashboard-container {
+    margin: 8px auto 28px;
+    padding: 0 4px;
+  }
   .dashboard-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
   .dashboard-header h2 {
-    font-size: 24px;
+    font-size: 22px;
+  }
+  .dash-card {
+    padding: 18px 16px;
+    border-radius: 14px;
+  }
+  .dash-card-main {
+    padding: 20px 16px;
+  }
+  .dash-card-title {
+    font-size: 19px;
+  }
+  .dash-card-main .dash-card-title {
+    font-size: 21px;
+  }
+  .dash-card-desc {
+    font-size: 14px;
+    margin-bottom: 14px;
   }
 }

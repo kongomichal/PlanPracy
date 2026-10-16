@@ -1,18 +1,19 @@
 /* Zakładki prac w oknie dnia + kafelki prac na karcie dnia */
 .job-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 18px 0; border-bottom: 1px solid var(--line); }
-.job-tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
+.job-tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; -webkit-overflow-scrolling: touch; }
 .job-tab {
   background: var(--gray-soft); border: 1px solid var(--line); border-bottom: none;
   border-radius: 8px 8px 0 0; padding: 8px 12px; font: inherit; font-size: 14px; font-weight: 600;
   color: var(--muted); cursor: pointer; white-space: nowrap; max-width: 170px; overflow: hidden; text-overflow: ellipsis;
+  touch-action: manipulation;
 }
 .job-tab.active { background: #fff; color: var(--accent-dark); border-color: var(--accent); margin-bottom: -1px; }
 .job-tab.add { background: var(--accent-soft); color: var(--accent-dark); }
 .job-bar .btn { margin-bottom: 8px; }
 
 .job {
-  border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: #fafbfd;
-  display: flex; flex-direction: column; gap: 3px;
+  border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; background: #fafbfd;
+  display: flex; flex-direction: column; gap: 4px;
 }
 .job + .job { margin-top: 2px; }
 .job.problem { border-left: 4px solid var(--red); }
@@ -20,8 +21,7 @@
 .item-job { font-size: 12px; color: var(--muted); }
 
 /* Kafelek pracy na karcie dnia: projekt i zadania w całości, reszta jako znaczniki */
-.job { gap: 4px; padding: 9px 11px; }
-.job-project { font-size: 15px; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; color: var(--accent-dark); margin-bottom: 2px; }
+.job-project { font-size: 15.5px; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; color: var(--accent-dark); margin-bottom: 2px; }
 .job-goal { font-size: 14.5px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; white-space: normal; }
 .job-tasks { display: flex; flex-direction: column; gap: 6px; margin: 2px 0 4px; }
 .job-task { display: flex; flex-direction: column; gap: 2px; }
@@ -38,10 +38,10 @@
 .view-sec h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 4px; }
 .view-big { font-size: 19px; font-weight: 800; overflow-wrap: anywhere; }
 .view-text { font-size: 16px; overflow-wrap: anywhere; white-space: pre-line; }
-.rh-row { display: grid; grid-template-columns: 1.3fr 1fr 96px 96px 56px; gap: 6px; align-items: center; padding: 5px 0; font-size: 14px; }
+.rh-row { display: grid; grid-template-columns: 1.3fr 1fr 96px 96px 56px; gap: 6px; align-items: center; padding: 6px 0; font-size: 14px; }
 .rh-row.rh-head { font-size: 12px; font-weight: 700; color: var(--muted); }
 .rh-row .r-h { font-weight: 700; text-align: right; }
-.view-item { display: flex; gap: 8px; align-items: center; padding: 3px 0; font-size: 15px; }
+.view-item { display: flex; gap: 8px; align-items: center; padding: 4px 0; font-size: 15px; }
 .view-item.done { color: var(--muted); text-decoration: line-through; }
 
 .hover-card {
@@ -52,21 +52,21 @@
 .hover-card .rh-row { grid-template-columns: 1fr auto; }
 
 @media (max-width: 600px) {
-  .rh-row { grid-template-columns: 1fr 1fr 1fr; }
-  .rh-row .rh-name { grid-column: 1 / 4; font-weight: 700; }
+  .rh-row { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .rh-row .rh-name { grid-column: 1 / 4; font-weight: 700; font-size: 15px; }
   .rh-row.rh-head { display: none; }
 }
 
 /* Podsumowanie godzin */
 .h-person { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 14px; overflow: hidden; }
-.h-person-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--accent-soft); font-size: 18px; font-weight: 800; }
-.h-project { display: flex; justify-content: space-between; padding: 9px 16px; background: var(--gray-soft); font-weight: 700; border-top: 1px solid var(--line); }
+.h-person-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--accent-soft); font-size: 17.5px; font-weight: 800; }
+.h-project { display: flex; justify-content: space-between; padding: 9px 16px; background: var(--gray-soft); font-weight: 700; border-top: 1px solid var(--line); font-size: 14.5px; }
 .h-line {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  padding: 6px 16px 6px 28px;
+  padding: 8px 16px 8px 24px;
   border-top: 1px solid var(--line);
   font-size: 15px;
   transition: background 0.15s ease;
@@ -81,7 +81,7 @@
 .h-line-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 .h-line-val {
   font-weight: 700;
@@ -92,18 +92,23 @@
 .h-line-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 .h-btn {
-  width: 28px;
-  min-height: 28px;
-  height: 28px;
+  width: 32px;
+  min-height: 32px;
+  height: 32px;
   padding: 0;
-  font-size: 13px;
-  border-radius: 6px;
+  font-size: 14px;
+  border-radius: 7px;
   background: #fff;
   border: 1px solid #cbd5e1;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .h-btn:hover {
   background: var(--accent-soft);
@@ -113,4 +118,46 @@
   background: var(--red-soft);
   border-color: var(--red);
 }
+.h-btn:active {
+  transform: scale(0.92);
+}
 .h-plan { font-size: 11px; font-weight: 700; color: var(--muted); background: var(--gray-soft); padding: 1px 6px; border-radius: 6px; margin-left: 6px; }
+
+@media (max-width: 540px) {
+  .h-person-head {
+    padding: 10px 14px;
+    font-size: 16.5px;
+  }
+  .h-project {
+    padding: 8px 14px;
+  }
+  .h-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 14px 10px 18px;
+  }
+  .h-line-desc {
+    width: 100%;
+    font-size: 14.5px;
+  }
+  .h-line-right {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 6px;
+    border-top: 1px dashed #e2e8f0;
+  }
+  .h-line-val {
+    font-size: 15px;
+  }
+  .h-line-actions {
+    gap: 8px;
+  }
+  .h-btn {
+    width: 36px;
+    min-height: 36px;
+    height: 36px;
+    font-size: 15px;
+    border-radius: 8px;
+  }
+}

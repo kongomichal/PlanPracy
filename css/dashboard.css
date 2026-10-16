@@ -1,7 +1,7 @@
 /* Ekran główny – 3 kafelki na wejściu */
 .dashboard-container {
   max-width: 1100px;
-  margin: 20px auto 40px;
+  margin: 12px auto 40px;
   padding: 0 16px;
 }
 

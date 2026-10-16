@@ -191,7 +191,7 @@ const Hours = {
                   <div class="h-project"><span>${esc(pn)}</span><span>${fmtHours(proj.total)}</span></div>
                   ${proj.lines.map(l => `
                     <div class="h-line">
-                      <span class="h-line-desc">${this.lineLabel(l)}${l.goal ? ' · ' + esc(l.goal) : ''}${l.real ? '' : '<span class="h-plan">plan</span>'}</span>
+                      <span class="h-line-desc">${this.lineLabel(l)}${l.real ? '' : '<span class="h-plan">plan</span>'}</span>
                       <div class="h-line-right">
                         <span class="h-line-val">${fmtHours(l.hours)}</span>
                         <div class="h-line-actions">

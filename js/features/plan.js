@@ -1,21 +1,13 @@
-/* Zakładka "Plan": 14 kart dni z listą prac. Płynnie przesuwający się harmonogram z odklikiwaniem minionych dni. */
+/* Zakładka "Plan": 30 kart dni z listą prac w ciągłym układzie. Płynnie przesuwający się harmonogram z odklikiwaniem minionych dni. */
 const Plan = {
-  pageOffset: 0,
+  COUNT: 30,
   showDismissed: false,
 
-  shift(days) {
-    this.pageOffset += days;
-  },
-
-  goToday() {
-    this.pageOffset = 0;
-  },
-
-  /** Znajduje pierwszy aktywny dzień od którego zaczyna się widok. */
+  /** Znajduje pierwszy aktywny dzień, od którego zaczyna się widok (dziś lub wcześniejszy dzień z nieodklikniętą pracą). */
   getFirstActiveDay() {
     const today = new Date();
     const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    let earliest = mondayOf(todayMidnight);
+    let earliest = todayMidnight;
 
     Object.entries(Store.data).forEach(([key, day]) => {
       if (day.jobs && day.jobs.length > 0 && !Store.isDismissed(key)) {
@@ -41,25 +33,14 @@ const Plan = {
     return earliest;
   },
 
-  /** Zwraca 14 dni dla bieżącego widoku (z uwzględnieniem odklikiwania i przewijania). */
+  /** Zwraca 30 aktywnych (nieodklikniętych) dni dla bieżącego widoku. */
   getDays() {
     const firstActive = this.getFirstActiveDay();
-
-    if (this.pageOffset < 0) {
-      const days = [];
-      const start = addDays(firstActive, this.pageOffset);
-      for (let i = 0; i < 14; i++) {
-        days.push(addDays(start, i));
-      }
-      return days;
-    }
-
     const activeDays = [];
-    const neededCount = this.pageOffset + 14;
     let curr = new Date(firstActive);
     let guard = 0;
 
-    while (activeDays.length < neededCount && guard < 1000) {
+    while (activeDays.length < this.COUNT && guard < 1000) {
       guard++;
       const key = dateKey(curr);
       const isDismissed = Store.isDismissed(key);
@@ -69,29 +50,17 @@ const Plan = {
       curr = addDays(curr, 1);
     }
 
-    return activeDays.slice(this.pageOffset, this.pageOffset + 14);
+    return activeDays;
   },
 
-  /** Wszystkie 14 aktualnie widocznych dni jako lista kluczy. */
+  /** Wszystkie 30 aktualnie widocznych dni jako lista kluczy. */
   keys() {
     return this.getDays().map(d => dateKey(d));
   },
 
-  /** Klucze najbliższych 28 aktywnych dni (do przenoszenia prac nawet na za 4 tygodnie). */
+  /** Klucze aktywnych dni (do przenoszenia prac). */
   moveTargetKeys() {
-    const firstActive = this.getFirstActiveDay();
-    const keys = [];
-    let curr = new Date(firstActive);
-    let guard = 0;
-    while (keys.length < 28 && guard < 1000) {
-      guard++;
-      const k = dateKey(curr);
-      if (!Store.isDismissed(k)) {
-        keys.push(k);
-      }
-      curr = addDays(curr, 1);
-    }
-    return keys;
+    return this.keys();
   },
 
   /** Zwraca minione dni obecne w bieżącym widoku, które nie zostały jeszcze odkliknięte. */
@@ -138,21 +107,13 @@ const Plan = {
 
     const start = days[0];
     const end = days[days.length - 1];
-    $('rangeLabel').textContent = `${shortDate(start)} – ${shortDate(end)}.${end.getFullYear()}`;
-
-    const w1 = [], w2 = [];
-    for (let i = 0; i < days.length; i++) {
-      (i < 7 ? w1 : w2).push(this.cardHtml(days[i]));
+    if ($('rangeLabel')) {
+      $('rangeLabel').textContent = `${shortDate(start)} – ${shortDate(end)}.${end.getFullYear()} (30 dni)`;
     }
-    $('week1').innerHTML = w1.join('');
-    $('week2').innerHTML = w2.join('');
 
-    // Dynamiczne tytuły tygodni
-    if ($('week1Title') && days.length >= 7) {
-      $('week1Title').textContent = `Tydzień 1 · ${shortDate(days[0])} – ${shortDate(days[6])}`;
-    }
-    if ($('week2Title') && days.length >= 14) {
-      $('week2Title').textContent = `Tydzień 2 · ${shortDate(days[7])} – ${shortDate(days[13])}`;
+    const container = $('planDays') || $('week1');
+    if (container) {
+      container.innerHTML = days.map(d => this.cardHtml(d)).join('');
     }
 
     // Pasek narzędzi

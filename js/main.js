@@ -24,10 +24,6 @@ const App = {
     JobView.init();
     Hours.init();
 
-    $('prevBtn').addEventListener('click', () => { Plan.shift(-14); this.render(); });
-    $('nextBtn').addEventListener('click', () => { Plan.shift(14); this.render(); });
-    $('todayBtn').addEventListener('click', () => { Plan.goToday(); this.render(); });
-
     $('tabs').addEventListener('click', (e) => {
       const tab = e.target.closest('.tab');
       if (tab) this.showTab(tab.dataset.tab);

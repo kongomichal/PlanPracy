@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Muraven – prosty plan pracy na 2 tygodnie: kto, gdzie, co i jakie rzeczy zabrać.">
+  <meta name="description" content="Muraven – prosty plan pracy: kto, gdzie, co i jakie rzeczy zabrać.">
   <title>Muraven – Plan pracy</title>
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
@@ -17,7 +17,7 @@
   <div id="loginScreen" class="login-screen">
     <form id="loginForm" class="login-box">
       <h1>Muraven</h1>
-      <p class="muted">Plan pracy na 2 tygodnie</p>
+      <p class="muted">Plan pracy</p>
       <div id="loginEmailWrap">
         <label for="loginEmail">E-mail</label>
         <input id="loginEmail" type="email" autocomplete="username" placeholder="Twój e-mail">
@@ -36,10 +36,7 @@
       <h1 class="logo">Muraven <span>plan pracy</span></h1>
 
       <div class="range-nav">
-        <button id="prevBtn" class="btn icon" aria-label="Poprzednie 2 tygodnie">‹</button>
-        <button id="todayBtn" class="btn">Dziś</button>
         <strong id="rangeLabel" class="range-label"></strong>
-        <button id="nextBtn" class="btn icon" aria-label="Następne 2 tygodnie">›</button>
       </div>
 
       <button id="menuBtn" class="btn">Menu</button>
@@ -70,15 +67,7 @@
         </div>
       </div>
 
-      <div class="week-header-row">
-        <h2 id="week1Title" class="week-title">Tydzień 1</h2>
-      </div>
-      <div id="week1" class="days"></div>
-
-      <div class="week-header-row">
-        <h2 id="week2Title" class="week-title">Tydzień 2</h2>
-      </div>
-      <div id="week2" class="days"></div>
+      <div id="planDays" class="days"></div>
     </section>
 
     <!-- RZECZY -->
@@ -86,7 +75,7 @@
       <div class="view-head">
         <div>
           <h2>Rzeczy do przygotowania</h2>
-          <p class="muted">Rusztowania, narzędzia, dokumenty i materiały z całych 2 tygodni.</p>
+          <p class="muted">Rusztowania, narzędzia, dokumenty i materiały z najbliższych 30 dni.</p>
         </div>
         <div class="row">
           <label class="check"><input type="checkbox" id="onlyTodo" checked> tylko niezałatwione</label>
@@ -116,7 +105,7 @@
         </div>
         <div class="row wrap">
           <select id="hoursRange" aria-label="Zakres">
-            <option value="window">Widoczne 14 dni</option>
+            <option value="window">Widoczne 30 dni</option>
             <option value="all">Cały zapis (wszystkie dni)</option>
           </select>
           <button id="copyHoursBtn" class="btn">Kopiuj jako tekst</button>
@@ -268,18 +257,18 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=4"></script>
-  <script src="js/core/utils.js?v=4"></script>
-  <script src="js/core/sample-data.js?v=4"></script>
-  <script src="js/core/storage.js?v=4"></script>
-  <script src="js/features/auth.js?v=4"></script>
-  <script src="js/features/plan.js?v=4"></script>
-  <script src="js/features/day-editor.js?v=4"></script>
-  <script src="js/features/items.js?v=4"></script>
-  <script src="js/features/people.js?v=4"></script>
-  <script src="js/features/hours.js?v=4"></script>
-  <script src="js/features/job-view.js?v=4"></script>
-  <script src="js/features/menu.js?v=4"></script>
-  <script src="js/main.js?v=4"></script>
+  <script src="js/core/firebase-config.js?v=5"></script>
+  <script src="js/core/utils.js?v=5"></script>
+  <script src="js/core/sample-data.js?v=5"></script>
+  <script src="js/core/storage.js?v=5"></script>
+  <script src="js/features/auth.js?v=5"></script>
+  <script src="js/features/plan.js?v=5"></script>
+  <script src="js/features/day-editor.js?v=5"></script>
+  <script src="js/features/items.js?v=5"></script>
+  <script src="js/features/people.js?v=5"></script>
+  <script src="js/features/hours.js?v=5"></script>
+  <script src="js/features/job-view.js?v=5"></script>
+  <script src="js/features/menu.js?v=5"></script>
+  <script src="js/main.js?v=5"></script>
 </body>
 </html>

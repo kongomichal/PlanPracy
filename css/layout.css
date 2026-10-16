@@ -7,8 +7,16 @@
 .logo { font-size: 20px; }
 .logo span { color: var(--muted); font-weight: 500; font-size: 15px; }
 
-.range-nav { display: flex; align-items: center; gap: 8px; }
-.range-label { min-width: 190px; text-align: center; font-size: 15px; }
+.range-nav { display: flex; align-items: center; }
+.range-label {
+  font-size: 14px;
+  color: #334155;
+  font-weight: 600;
+  background: var(--gray-soft);
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+}
 
 .tabs { max-width: 1400px; margin: 0 auto; padding: 0 16px; display: flex; gap: 4px; overflow-x: auto; }
 .tab {

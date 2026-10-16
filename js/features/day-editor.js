@@ -198,7 +198,8 @@ const DayEditor = {
   },
 
   fillMoveTargets() {
-    $('moveTarget').innerHTML = Plan.keys()
+    const keys = typeof Plan.moveTargetKeys === 'function' ? Plan.moveTargetKeys() : Plan.keys();
+    $('moveTarget').innerHTML = keys
       .filter(k => k !== this.key)
       .map(k => `<option value="${k}">${longDate(parseKey(k))}</option>`).join('');
   },

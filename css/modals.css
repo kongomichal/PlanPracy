@@ -75,4 +75,12 @@
 
 /* Powiadomienia */
 .toasts { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; z-index: 200; }
-.toast { background: #1c2430; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 15px; box-shadow: 0 4px 14px rgba(0, 0, 0, .25); }
+.toast {
+  background: #1c2430; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 14.5px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .25); display: flex; align-items: center; gap: 12px;
+}
+.toast-btn {
+  background: var(--accent); color: #fff; border: none; border-radius: 6px;
+  padding: 4px 10px; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap;
+}
+.toast-btn:hover { background: var(--accent-dark); }

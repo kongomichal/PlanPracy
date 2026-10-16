@@ -5,6 +5,20 @@ const Menu = {
     $('savePasswordBtn').addEventListener('click', () => Auth.changePassword($('newPassword').value));
     $('logoutBtn').addEventListener('click', () => Auth.logout());
 
+    const restoreBtn = $('restoreAllBtn');
+    if (restoreBtn) {
+      restoreBtn.addEventListener('click', () => {
+        const dismissedCount = Object.values(Store.data).filter(d => d.dismissed).length;
+        if (!dismissedCount) return toast('Brak odklikniętych dni do przywrócenia');
+        if (!confirm(`Przywrócić wszystkie odkliknięte dni (${dismissedCount}) na plan?`)) return;
+        Object.values(Store.data).forEach(d => { if (d.dismissed) d.dismissed = false; });
+        Store.save();
+        App.render();
+        closeModal('menuModal');
+        toast(`Przywrócono ${dismissedCount} ${plural(dismissedCount, 'dzień', 'dni', 'dni')}`);
+      });
+    }
+
     $('exportBtn').addEventListener('click', () => {
       const blob = new Blob([Store.exportJson()], { type: 'application/json' });
       const a = document.createElement('a');

@@ -115,7 +115,7 @@ const Store = {
         const j = this.normalizeJob(day);
         if (this.jobHasContent(j)) jobs.push(j);
       }
-      out[key] = { date: key, jobs };
+      out[key] = { date: key, jobs, dismissed: !!day.dismissed };
     });
     return out;
   },
@@ -130,13 +130,24 @@ const Store = {
   },
 
   empty(key) {
-    return { date: key, jobs: [] };
+    return { date: key, jobs: [], dismissed: false };
   },
 
   get(key) {
     const day = this.data[key] || this.empty(key);
     if (!Array.isArray(day.jobs)) day.jobs = [];
+    if (day.dismissed === undefined) day.dismissed = false;
     return day;
+  },
+
+  isDismissed(key) {
+    return !!(this.data[key] && this.data[key].dismissed);
+  },
+
+  setDismissed(key, dismissed) {
+    const day = this.get(key);
+    day.dismissed = !!dismissed;
+    this.set(key, day);
   },
 
   set(key, day) {
@@ -149,7 +160,7 @@ const Store = {
   },
 
   hasContent(day) {
-    return day.jobs.length > 0;
+    return (day.jobs && day.jobs.length > 0) || !!day.dismissed;
   },
 
   exportJson() {

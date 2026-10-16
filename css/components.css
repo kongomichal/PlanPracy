@@ -3,19 +3,62 @@
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 10px 12px; box-shadow: var(--shadow); cursor: pointer;
   display: flex; flex-direction: column; gap: 6px; min-height: 150px; height: auto;
+  transition: opacity .2s, border-color .15s;
 }
 .day:hover { border-color: var(--accent); }
 .day.today { border: 2px solid var(--accent); padding: 9px 11px; }
 .day.weekend { background: #fafbfc; }
 .day.problem { border-left: 5px solid var(--red); }
-.day-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-.day-date { font-size: 15px; }
+.day.past { background: #fbfcfd; }
+.day.dismissed { opacity: 0.65; border-style: dashed; background: #f8fafc; }
+.day.dismissed:hover { opacity: 1; border-color: var(--accent); }
+.day-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; }
+.day-date { font-size: 15px; display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .day-date b { text-transform: uppercase; }
 .day-place { font-size: 13px; color: var(--muted); font-weight: 600; }
 .day-goal { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; white-space: normal; }
 .day-meta { font-size: 13px; color: var(--muted); margin-top: auto; }
 .day-empty { color: var(--muted); font-size: 14px; margin: auto 0; text-align: center; }
 .day .btn { align-self: flex-start; }
+
+/* Pasek narzędzi planu: odklikanie minionych dni i filtr */
+.plan-toolbar {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 14px; margin-bottom: 12px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.plan-toolbar-left, .plan-toolbar-right { display: flex; align-items: center; gap: 8px; }
+.show-dismissed-label { user-select: none; color: var(--muted); font-size: 13px; }
+
+/* Przyciski odklikania i przywracania */
+.success-btn {
+  background: var(--green-soft); color: var(--green); border-color: #86efac; font-weight: 700;
+}
+.success-btn:hover { background: #bbf7d0; border-color: var(--green); }
+
+.dismiss-btn {
+  background: var(--green-soft); color: var(--green); border-color: #86efac; font-weight: 700;
+}
+.dismiss-btn:hover { background: #bbf7d0; border-color: var(--green); }
+
+.restore-btn {
+  background: var(--accent-soft); color: var(--accent-dark); border-color: #bfdbfe; font-weight: 600;
+}
+.restore-btn:hover { background: #dbeafe; }
+
+.btn-check-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; min-width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid #cbd5e1; background: #fff; color: #94a3b8;
+  font-size: 13px; font-weight: bold; cursor: pointer; transition: all .15s ease; padding: 0;
+}
+.btn-check-icon:hover {
+  background: var(--green-soft); border-color: var(--green); color: var(--green); transform: scale(1.08);
+}
+
+.dismissed-badge {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  background: #f1f5f9; color: var(--muted); padding: 2px 6px; border-radius: 6px; letter-spacing: .3px;
+}
 
 /* Statusy */
 .badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }

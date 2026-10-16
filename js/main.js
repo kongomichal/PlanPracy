@@ -18,6 +18,7 @@ const App = {
   init() {
     Store.load();
     Auth.init();
+    Plan.init();
     DayEditor.init();
     Menu.init();
     JobView.init();
@@ -32,8 +33,12 @@ const App = {
       if (tab) this.showTab(tab.dataset.tab);
     });
 
-    // Kliknięcie dnia / przycisku "Przenieś" na planie
+    // Kliknięcie dnia / przycisku "Przenieś" / odklikania na planie
     $('view-plan').addEventListener('click', (e) => {
+      const dismiss = e.target.closest('[data-dismiss]');
+      if (dismiss) return Plan.dismissDay(dismiss.dataset.dismiss);
+      const restore = e.target.closest('[data-restore]');
+      if (restore) return Plan.restoreDay(restore.dataset.restore);
       const edit = e.target.closest('[data-edit]');
       if (edit) return DayEditor.open(edit.dataset.edit);
       const move = e.target.closest('[data-move]');

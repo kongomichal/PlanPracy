@@ -77,12 +77,25 @@ function plural(n, one, few, many) {
   return many;
 }
 
-function toast(msg) {
+function toast(msg, actionText, actionFn) {
   const el = document.createElement('div');
   el.className = 'toast';
-  el.textContent = msg;
+  const span = document.createElement('span');
+  span.textContent = msg;
+  el.appendChild(span);
+  if (actionText && typeof actionFn === 'function') {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'toast-btn';
+    btn.textContent = actionText;
+    btn.addEventListener('click', () => {
+      actionFn();
+      el.remove();
+    });
+    el.appendChild(btn);
+  }
   $('toasts').appendChild(el);
-  setTimeout(() => el.remove(), 2800);
+  setTimeout(() => el.remove(), 4000);
 }
 
 function openModal(id) { $(id).classList.add('open'); }

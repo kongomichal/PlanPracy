@@ -57,9 +57,27 @@
 
     <!-- PLAN -->
     <section id="view-plan" class="view active">
-      <h2 class="week-title">Tydzień 1</h2>
+      <div class="plan-toolbar">
+        <div class="plan-toolbar-left">
+          <button id="dismissPastBtn" class="btn small success-btn" title="Odkliknij wszystkie dni, które już minęły" hidden>
+            ✓ Odkliknij minione dni (<span id="pastDaysCount">0</span>)
+          </button>
+        </div>
+        <div class="plan-toolbar-right">
+          <label class="check small show-dismissed-label" title="Pokaż zakończone i odkliknięte dni na planie">
+            <input type="checkbox" id="showDismissedToggle"> Pokaż odkliknięte (<span id="dismissedTotalCount">0</span>)
+          </label>
+        </div>
+      </div>
+
+      <div class="week-header-row">
+        <h2 id="week1Title" class="week-title">Tydzień 1</h2>
+      </div>
       <div id="week1" class="days"></div>
-      <h2 class="week-title">Tydzień 2</h2>
+
+      <div class="week-header-row">
+        <h2 id="week2Title" class="week-title">Tydzień 2</h2>
+      </div>
       <div id="week2" class="days"></div>
     </section>
 
@@ -231,6 +249,11 @@
           </div>
         </section>
         <section class="block">
+          <h3>Odkliknięte dni</h3>
+          <p class="muted small" style="margin-bottom:8px">Możesz w każdej chwili przywrócić wszystkie zakończone dni z powrotem na plan.</p>
+          <button id="restoreAllBtn" class="btn">Przywróć wszystkie odkliknięte dni</button>
+        </section>
+        <section class="block">
           <h3>Udostępnianie</h3>
           <p id="sharingText" class="muted small">Dane są teraz zapisane tylko w tej przeglądarce. Żeby cała ekipa widziała ten sam plan, trzeba dodać serwer z bazą danych – to kolejny krok.</p>
         </section>
@@ -245,18 +268,18 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=3"></script>
-  <script src="js/core/utils.js?v=3"></script>
-  <script src="js/core/sample-data.js?v=3"></script>
-  <script src="js/core/storage.js?v=3"></script>
-  <script src="js/features/auth.js?v=3"></script>
-  <script src="js/features/plan.js?v=3"></script>
-  <script src="js/features/day-editor.js?v=3"></script>
-  <script src="js/features/items.js?v=3"></script>
-  <script src="js/features/people.js?v=3"></script>
-  <script src="js/features/hours.js?v=3"></script>
-  <script src="js/features/job-view.js?v=3"></script>
-  <script src="js/features/menu.js?v=3"></script>
-  <script src="js/main.js?v=3"></script>
+  <script src="js/core/firebase-config.js?v=4"></script>
+  <script src="js/core/utils.js?v=4"></script>
+  <script src="js/core/sample-data.js?v=4"></script>
+  <script src="js/core/storage.js?v=4"></script>
+  <script src="js/features/auth.js?v=4"></script>
+  <script src="js/features/plan.js?v=4"></script>
+  <script src="js/features/day-editor.js?v=4"></script>
+  <script src="js/features/items.js?v=4"></script>
+  <script src="js/features/people.js?v=4"></script>
+  <script src="js/features/hours.js?v=4"></script>
+  <script src="js/features/job-view.js?v=4"></script>
+  <script src="js/features/menu.js?v=4"></script>
+  <script src="js/main.js?v=4"></script>
 </body>
 </html>

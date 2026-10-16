@@ -1,9 +1,8 @@
 /* Moduł "Godziny": szybki formularz dodawania godzin oraz automatyczne podsumowanie z edycją i usuwaniem */
 const Hours = {
-  /** Zbiera dane: osoba -> projekt -> dni. Prace przeniesione na inny dzień są pomijane. */
+  /** Zbiera dane ze wszystkich dni: osoba -> projekt -> dni. Prace przeniesione na inny dzień są pomijane. */
   collect() {
-    const rangeSelect = $('hoursRange');
-    const keys = (rangeSelect && rangeSelect.value === 'all') ? Object.keys(Store.data).sort() : Plan.keys();
+    const keys = Object.keys(Store.data).sort();
     const people = {};
 
     keys.forEach(key => {
@@ -179,7 +178,7 @@ const Hours = {
 
     if (box) {
       if (!names.length) {
-        box.innerHTML = '<div class="empty-state">Brak godzin w wybranym zakresie.</div>';
+        box.innerHTML = '<div class="empty-state">Brak wprowadzonych godzin. Dodaj godziny w formularzu powyżej. 👍</div>';
       } else {
         box.innerHTML = names.map(name => {
           const person = people[name];
@@ -234,7 +233,6 @@ const Hours = {
   },
 
   init() {
-    $('hoursRange')?.addEventListener('change', () => this.render());
     $('copyHoursBtn')?.addEventListener('click', () => this.copyText());
 
     if ($('qhDate') && !$('qhDate').value) {

@@ -348,6 +348,61 @@
     </div>
   </div>
 
+  <!-- ============ EDYCJA GODZIN ============ -->
+  <div id="editHoursModal" class="modal">
+    <div class="modal-box small-box">
+      <div class="modal-head">
+        <h2 id="ehModalTitle">Edytuj wpis godzin</h2>
+        <button type="button" class="btn icon" data-close aria-label="Zamknij">✕</button>
+      </div>
+      <form id="editHoursForm">
+        <div class="modal-body">
+          <input type="hidden" id="ehKey">
+          <input type="hidden" id="ehJobIndex">
+          <input type="hidden" id="ehPersonIndex">
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="ehDate">Data</label>
+            <input type="date" id="ehDate" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="ehName">Imię i nazwisko</label>
+            <input type="text" id="ehName" list="peopleNames" required>
+          </div>
+
+          <div class="row" style="margin-bottom: 12px;">
+            <div class="form-group" style="flex:1;">
+              <label for="ehFrom">Od godziny</label>
+              <input type="time" id="ehFrom" required>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label for="ehTo">Do godziny</label>
+              <input type="time" id="ehTo" required>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label for="ehProject">Projekt / Budowa</label>
+            <input type="text" id="ehProject" placeholder="np. Tefra - N2 lub Wilanów">
+          </div>
+
+          <div class="calculated-hours-pill" style="display: inline-block;">
+            Czas pracy: <strong id="ehCalculated">0 h</strong>
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" id="ehDeleteBtn" class="btn danger">Usuń ten wpis</button>
+          <div class="row">
+            <button type="button" class="btn" data-close>Anuluj</button>
+            <button type="submit" class="btn primary">Zapisz</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Karta podglądu po najechaniu na kafelek -->
   <div id="hoverCard" class="hover-card" hidden></div>
 
@@ -394,19 +449,19 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=6"></script>
-  <script src="js/core/utils.js?v=6"></script>
-  <script src="js/core/sample-data.js?v=6"></script>
-  <script src="js/core/storage.js?v=6"></script>
-  <script src="js/features/auth.js?v=6"></script>
-  <script src="js/features/plan.js?v=6"></script>
-  <script src="js/features/day-editor.js?v=6"></script>
-  <script src="js/features/items.js?v=6"></script>
-  <script src="js/features/people.js?v=6"></script>
-  <script src="js/features/hours.js?v=6"></script>
-  <script src="js/features/reminders.js?v=6"></script>
-  <script src="js/features/job-view.js?v=6"></script>
-  <script src="js/features/menu.js?v=6"></script>
-  <script src="js/main.js?v=6"></script>
+  <script src="js/core/firebase-config.js?v=7"></script>
+  <script src="js/core/utils.js?v=7"></script>
+  <script src="js/core/sample-data.js?v=7"></script>
+  <script src="js/core/storage.js?v=7"></script>
+  <script src="js/features/auth.js?v=7"></script>
+  <script src="js/features/plan.js?v=7"></script>
+  <script src="js/features/day-editor.js?v=7"></script>
+  <script src="js/features/items.js?v=7"></script>
+  <script src="js/features/people.js?v=7"></script>
+  <script src="js/features/hours.js?v=7"></script>
+  <script src="js/features/reminders.js?v=7"></script>
+  <script src="js/features/job-view.js?v=7"></script>
+  <script src="js/features/menu.js?v=7"></script>
+  <script src="js/main.js?v=7"></script>
 </body>
 </html>

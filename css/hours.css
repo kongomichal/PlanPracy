@@ -1,6 +1,6 @@
-/* Moduł Godziny: wzornik szybkiego dodawania godzin zoptymalizowany pod telefony */
+/* Moduł Godziny i Ewidencja RBH: układ i stylistyka zgodna z Panelem Muraven */
 .hours-wrap {
-  max-width: 960px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
@@ -9,8 +9,8 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 20px;
-  margin-bottom: 24px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
 }
 .hours-entry-card h3 {
   font-size: 19px;
@@ -19,59 +19,149 @@
   color: #0f172a;
 }
 
-.quick-hours-form {
+/* FORMULARZ RBH ZGODNY Z PANELEM MURAVEN */
+.kadry-form {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.quick-form-grid {
-  display: grid;
-  grid-template-columns: 135px 1.25fr 105px 105px 1.1fr 1.3fr;
+  flex-wrap: wrap;
   gap: 12px;
-  align-items: end;
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  margin-bottom: 14px;
+  align-items: flex-end;
 }
 
-.form-group {
+.kadry-input-group {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
-.form-group label {
-  margin: 0;
-  font-size: 13.5px;
+
+.kadry-input-group label {
+  font-size: 12px;
   font-weight: 700;
   color: #475569;
 }
 
-.quick-hours-actions {
+.kadry-input {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: #1e293b;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kadry-input:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+}
+
+.kadry-group-date { width: 140px; }
+.kadry-group-emp { flex: 1.2; min-width: 150px; }
+.kadry-group-proj { flex: 1.3; min-width: 160px; }
+.kadry-group-notes { flex: 1.6; min-width: 170px; }
+.kadry-group-time { width: 95px; }
+
+.kadry-action-group {
   display: flex;
-  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.kadry-btn-primary {
+  background-color: #198754;
+  color: #fff;
+  border: none;
+  padding: 0 18px;
+  font-size: 14.5px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  height: 38px;
+  white-space: nowrap;
+  display: inline-flex;
   align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
+  justify-content: center;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.kadry-btn-primary:hover {
+  background-color: #157347;
+}
+
+.kadry-btn-primary:active {
+  transform: scale(0.98);
+}
+
+.quick-hours-calculated-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 6px;
 }
 
 .calculated-hours-pill {
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--green);
   background: var(--green-soft);
-  padding: 7px 14px;
-  border-radius: 8px;
+  padding: 5px 12px;
+  border-radius: 6px;
   border: 1px solid #bbf7d0;
 }
 .calculated-hours-pill strong {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
 }
 
-.hours-summary-header {
+/* PASEK AKCJI (POBIERANIE / SCALANIE) */
+.hours-actions-bar {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.hours-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hours-actions-right {
+  display: flex;
+  align-items: center;
+}
+
+.btn.success-btn {
+  background: #198754;
+  color: #fff;
+  border: 1px solid #198754;
+  font-weight: 700;
+}
+.btn.success-btn:hover {
+  background: #157347;
+  border-color: #157347;
+}
+
+.btn.outline-btn {
+  background: #fff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn.outline-btn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
 }
 
 .hours-total-badge {
@@ -83,59 +173,199 @@
   border-radius: 20px;
 }
 
-@media (max-width: 900px) {
-  .quick-form-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+/* PRZEŁĄCZNIK WIDOKÓW */
+.rbh-tabs-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-@media (max-width: 600px) {
-  .hours-entry-card {
-    padding: 16px 14px;
-    margin-bottom: 20px;
-  }
-  .hours-entry-card h3 {
-    font-size: 18px;
-    margin-bottom: 10px;
-  }
-  .quick-form-grid {
+.rbh-tab-btn {
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #e9ecef;
+  color: #495057;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rbh-tab-btn:hover {
+  background: #dee2e6;
+  color: #212529;
+}
+
+.rbh-tab-btn.active {
+  background: #198754;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(25, 135, 84, 0.25);
+}
+
+/* PASEK FILTRÓW REJESTRU RBH */
+.payout-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  background: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+
+.payout-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.payout-filter-group label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.payout-select {
+  height: 37px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: #1e293b;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.payout-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+}
+
+/* TABELA FIN-TABLE ZGODNA Z PANELEM RBH */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+
+.fin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  min-width: 720px;
+}
+
+.fin-table th,
+.fin-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.fin-table th {
+  background: #f8f9fa;
+  font-weight: 700;
+  color: #495057;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.fin-table tr:hover td {
+  background: #f8fafc;
+}
+
+.fin-table td strong {
+  color: #0f172a;
+}
+
+.biz-btn-edit {
+  background: #0d6efd;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 6px;
+  transition: background 0.15s ease;
+}
+
+.biz-btn-edit:hover {
+  background: #0b5ed7;
+}
+
+.biz-btn-del {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.biz-btn-del:hover {
+  background: #bb2d3b;
+}
+
+@media (max-width: 860px) {
+  .kadry-form {
+    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
-  .quick-form-grid .form-group:nth-child(1) { grid-column: 1 / -1; } /* Data */
-  .quick-form-grid .form-group:nth-child(2) { grid-column: 1 / -1; } /* Imię i nazwisko */
-  .quick-form-grid .form-group:nth-child(3) { grid-column: 1; }      /* Od */
-  .quick-form-grid .form-group:nth-child(4) { grid-column: 2; }      /* Do */
-  .quick-form-grid .form-group:nth-child(5) { grid-column: 1 / -1; } /* Projekt */
-  .quick-form-grid .form-group:nth-child(6) { grid-column: 1 / -1; } /* Notatka */
-
-  .quick-hours-actions {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-    padding-top: 10px;
+  .kadry-group-date { width: auto; grid-column: 1; }
+  .kadry-group-emp { width: auto; grid-column: 2; }
+  .kadry-group-proj { width: auto; grid-column: 1 / -1; }
+  .kadry-group-notes { width: auto; grid-column: 1 / -1; }
+  .kadry-group-time { width: auto; }
+  .kadry-action-group {
+    grid-column: 1 / -1;
   }
-  .calculated-hours-pill {
-    text-align: center;
+  .kadry-btn-primary {
     width: 100%;
-    padding: 8px 12px;
-    font-size: 15px;
-  }
-  .quick-hours-actions .btn {
-    width: 100%;
-    min-height: 46px;
+    height: 44px;
     font-size: 16px;
   }
-
-  .hours-summary-header {
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
+  .payout-filter-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
-  .hours-summary-header .row {
-    width: auto;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .payout-filter-group:nth-child(4) {
+    grid-column: 1 / -1;
+  }
+  .hours-actions-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hours-actions-left {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hours-actions-left .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+  .hours-actions-right {
+    justify-content: center;
   }
 }

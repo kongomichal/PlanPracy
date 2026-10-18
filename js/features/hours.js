@@ -1,6 +1,12 @@
-/* Moduł "Godziny": szybki formularz dodawania godzin oraz automatyczne podsumowanie z edycją i usuwaniem */
+/* Moduł "Godziny" / "Ewidencja RBH": rejestr zgodny z Panelem Muraven, szybki formularz oraz eksport do bazy JSON */
 const Hours = {
-  /** Zbiera dane ze wszystkich dni: osoba -> projekt -> dni. Prace przeniesione na inny dzień są pomijane. */
+  activeView: 'register', // 'register' (Tabela RBH) | 'summary' (Karty projektowe)
+  filterYear: 'ALL',
+  filterMonth: 'ALL',
+  filterEmployee: 'ALL',
+  filterProject: 'ALL',
+
+  /** Zbiera dane w strukturze: osoba -> projekt -> wpisy (dla widoku kart). */
   collect() {
     const keys = Object.keys(Store.data).sort();
     const people = {};
@@ -8,8 +14,9 @@ const Hours = {
     keys.forEach(key => {
       Store.get(key).jobs.forEach((job, jobIndex) => {
         if (job.status === 'moved') return;
-        const project = job.place || 'Bez projektu';
+        const project = (job.place || 'Prace ogólne').trim();
         job.people.forEach((p, personIndex) => {
+          if (!p.name) return;
           const { hours, real } = personHours(p);
           const person = people[p.name] = people[p.name] || { total: 0, projects: {} };
           const proj = person.projects[project] = person.projects[project] || { total: 0, lines: [] };
@@ -31,6 +38,49 @@ const Hours = {
       });
     });
     return people;
+  },
+
+  /** Zbiera płaską listę wpisów w 100% zgodną z kolekcją workLog w Panelu Muraven (najnowsze pierwsze). */
+  collectFlat() {
+    const list = [];
+    const keys = Object.keys(Store.data).sort().reverse();
+    let counter = 0;
+
+    keys.forEach(date => {
+      const day = Store.get(date);
+      if (!day || !day.jobs) return;
+
+      day.jobs.forEach((job, jobIndex) => {
+        if (job.status === 'moved') return;
+        const project = (job.place || 'Prace ogólne').trim();
+
+        (job.people || []).forEach((p, personIndex) => {
+          if (!p.name) return;
+          const ph = personHours(p);
+          const from = ph.real ? (p.realFrom || p.from) : (p.from || p.realFrom);
+          const to = ph.real ? (p.realTo || p.to) : (p.to || p.realTo);
+          const sT = from || '07:00';
+          const eT = to || '15:30';
+          const timeRange = `${sT} - ${eT}`;
+
+          counter++;
+          list.push({
+            id: p.id || `wl-${date.replace(/-/g, '')}-${jobIndex}-${personIndex}-${counter}`,
+            date: date,
+            employee: p.name.trim(),
+            project: project,
+            notes: (p.note || '').trim(),
+            timeRange: timeRange,
+            totalHours: ph.hours,
+            real: ph.real,
+            jobIndex,
+            personIndex
+          });
+        });
+      });
+    });
+
+    return list;
   },
 
   timeRange(l) {
@@ -79,26 +129,389 @@ const Hours = {
     const note = $('qhNote')?.value.trim() || '';
 
     if (!date || !name || !from || !to) {
-      return toast('Wypełnij wymagane pola (data, imię, od, do)');
+      return toast('Wypełnij wymagane pola (data, pracownik, od, do)');
     }
 
     const ok = Store.addHoursEntry({ date, name, from, to, project, note });
     if (ok) {
       App.render();
       toast(`Zapisano ${fmtHours(hoursBetween(from, to))} dla ${name}`);
-      $('qhName').value = '';
+
+      // Wizualny feedback na przycisku
+      const btn = $('qhSubmitBtn');
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = '✓ Zapisano!';
+        btn.style.backgroundColor = '#157347';
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.style.backgroundColor = '';
+        }, 800);
+      }
+
+      // Przygotuj formularz do kolejnego wpisu
       $('qhProject').value = '';
       if ($('qhNote')) $('qhNote').value = '';
-      $('qhName').focus();
+      $('qhProject').focus();
     }
+  },
+
+  /* ---------- Filtry tabeli Rejestru RBH ---------- */
+  populateFilters() {
+    const workLog = this.collectFlat();
+
+    // 1. Lata
+    const yearsSet = new Set();
+    const currentYear = String(new Date().getFullYear());
+    yearsSet.add(currentYear);
+    workLog.forEach(w => {
+      if (w.date && w.date.length >= 4) yearsSet.add(w.date.slice(0, 4));
+    });
+    const years = [...yearsSet].sort().reverse();
+    const yearSel = $('filterMainYear');
+    if (yearSel) {
+      const currVal = yearSel.value || this.filterYear;
+      yearSel.innerHTML = `<option value="ALL">Wszystkie lata</option>` +
+        years.map(y => `<option value="${y}" ${y === currVal ? 'selected' : ''}>Rok ${y}</option>`).join('');
+    }
+
+    // 2. Pracownicy
+    const empSet = new Set();
+    workLog.forEach(w => { if (w.employee) empSet.add(w.employee); });
+    const employees = [...empSet].sort((a, b) => a.localeCompare(b, 'pl'));
+    const empSel = $('filterMainEmployee');
+    if (empSel) {
+      const currVal = empSel.value || this.filterEmployee;
+      empSel.innerHTML = `<option value="ALL">Wszyscy pracownicy</option>` +
+        employees.map(e => `<option value="${esc(e)}" ${e === currVal ? 'selected' : ''}>${esc(e)}</option>`).join('');
+    }
+
+    // 3. Projekty
+    const projSet = new Set();
+    workLog.forEach(w => { if (w.project) projSet.add(w.project); });
+    const projects = [...projSet].sort((a, b) => a.localeCompare(b, 'pl'));
+    const projSel = $('filterMainProject');
+    if (projSel) {
+      const currVal = projSel.value || this.filterProject;
+      projSel.innerHTML = `<option value="ALL">Wszystkie projekty</option>` +
+        projects.map(p => `<option value="${esc(p)}" ${p === currVal ? 'selected' : ''}>${esc(p)}</option>`).join('');
+    }
+  },
+
+  refreshProjectSuggestions() {
+    let dl = $('projectsDatalist');
+    if (!dl) {
+      dl = document.createElement('datalist');
+      dl.id = 'projectsDatalist';
+      document.body.appendChild(dl);
+    }
+    const projects = new Set();
+    Object.values(Store.data).forEach(d => {
+      (d.jobs || []).forEach(j => {
+        if (j.place && j.place.trim()) projects.add(j.place.trim());
+      });
+    });
+    dl.innerHTML = [...projects].sort((a, b) => a.localeCompare(b, 'pl'))
+      .map(p => `<option value="${esc(p)}">`).join('');
+  },
+
+  /* ---------- Renderowanie tabeli Rejestru Godzin RBH ---------- */
+  renderTable() {
+    const tbody = $('kadryTableBody');
+    if (!tbody) return;
+
+    const workLog = this.collectFlat();
+    const year = $('filterMainYear')?.value || this.filterYear;
+    const month = $('filterMainMonth')?.value || this.filterMonth;
+    const emp = $('filterMainEmployee')?.value || this.filterEmployee;
+    const proj = $('filterMainProject')?.value || this.filterProject;
+
+    const filtered = workLog.filter(w => {
+      if (!w.date) return false;
+      const parts = w.date.split('-');
+      if (year !== 'ALL' && parts[0] !== year) return false;
+      if (month !== 'ALL' && parts[1] !== month) return false;
+      if (emp !== 'ALL' && w.employee.toLowerCase() !== emp.toLowerCase()) return false;
+      if (proj !== 'ALL' && w.project.toLowerCase() !== proj.toLowerCase()) return false;
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 24px; color:#64748b;">Brak wpisów dla wybranych kryteriów.</td></tr>';
+    } else {
+      tbody.innerHTML = filtered.map(w => {
+        const hoursDisplay = w.timeRange ? w.timeRange : '-';
+        let numHours = parseFloat(w.totalHours) || 0;
+        let formattedHours = Math.round(numHours * 100) / 100;
+
+        return `<tr>
+          <td>${w.date}</td>
+          <td><strong>${esc(w.employee)}</strong></td>
+          <td>${esc(w.project)}</td>
+          <td>${esc(w.notes) || '—'}</td>
+          <td style="color:#6c757d; font-size: 12px; font-weight: 500;">${hoursDisplay}</td>
+          <td style="font-weight:bold; color:#0d6efd;">${formattedHours}h</td>
+          <td style="white-space:nowrap;">
+            <button type="button" class="biz-btn-edit" data-edit-hours="${w.date}" data-job="${w.jobIndex}" data-person="${w.personIndex}">Edytuj</button>
+            <button type="button" class="biz-btn-del" data-delete-hours="${w.date}" data-job="${w.jobIndex}" data-person="${w.personIndex}">Usuń</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+  },
+
+  /* ---------- Renderowanie kart podsumowania wg projektów ---------- */
+  renderSummaryCards() {
+    const people = this.collect();
+    const names = this.sortedNames(people);
+    const box = $('hoursList');
+    if (!box) return;
+
+    if (!names.length) {
+      box.innerHTML = '<div class="empty-state">Brak wprowadzonych godzin. Dodaj godziny w formularzu powyżej. 👍</div>';
+      return;
+    }
+
+    box.innerHTML = names.map(name => {
+      const person = people[name];
+      return `
+        <section class="h-person">
+          <div class="h-person-head"><span>${esc(name)}</span><span>${fmtHours(person.total)}</span></div>
+          ${Object.keys(person.projects).sort((a, b) => a.localeCompare(b, 'pl')).map(pn => {
+            const proj = person.projects[pn];
+            return `
+              <div class="h-project"><span>${esc(pn)}</span><span>${fmtHours(proj.total)}</span></div>
+              ${proj.lines.map(l => {
+                const time = this.timeRange(l);
+                return `
+                <div class="h-line">
+                  <span class="h-line-desc">
+                    <strong class="h-line-date">${this.lineLabel(l)}</strong>
+                    ${l.note ? ' · <span class="h-note">' + esc(l.note) + '</span>' : ''}
+                    ${l.real ? '' : '<span class="h-plan">plan</span>'}
+                  </span>
+                  <div class="h-line-right">
+                    <div class="h-line-hours-box">
+                      ${time ? `<span class="h-line-time ${l.real ? '' : 'plan'}" title="${l.real ? 'Rzeczywiste godziny pracy' : 'Zaplanowane godziny'}: ${time} (suma: ${fmtHours(l.hours)})">${time}</span>` : ''}
+                      <span class="h-line-val">${fmtHours(l.hours)}</span>
+                    </div>
+                    <div class="h-line-actions">
+                      <button type="button" class="btn small icon h-btn" data-edit-hours="${l.key}" data-job="${l.jobIndex}" data-person="${l.personIndex}" title="Edytuj te godziny">✏️</button>
+                      <button type="button" class="btn small icon danger h-btn" data-delete-hours="${l.key}" data-job="${l.jobIndex}" data-person="${l.personIndex}" title="Usuń te godziny">🗑️</button>
+                    </div>
+                  </div>
+                </div>`;
+              }).join('')}`;
+          }).join('')}
+        </section>`;
+    }).join('');
+  },
+
+  render() {
+    this.refreshProjectSuggestions();
+    this.populateFilters();
+    this.renderTable();
+    this.renderSummaryCards();
+
+    const totalEl = $('hoursTotalSumBadge');
+    if (totalEl) {
+      totalEl.textContent = fmtHours(this.totalSum());
+    }
+  },
+
+  switchView(v) {
+    this.activeView = v;
+    if (v === 'register') {
+      $('rbhTabRegister')?.classList.add('active');
+      $('rbhTabSummary')?.classList.remove('active');
+      if ($('rbhRegisterView')) $('rbhRegisterView').style.display = 'block';
+      if ($('rbhSummaryView')) $('rbhSummaryView').style.display = 'none';
+      this.renderTable();
+    } else {
+      $('rbhTabSummary')?.classList.add('active');
+      $('rbhTabRegister')?.classList.remove('active');
+      if ($('rbhRegisterView')) $('rbhRegisterView').style.display = 'none';
+      if ($('rbhSummaryView')) $('rbhSummaryView').style.display = 'block';
+      this.renderSummaryCards();
+    }
+  },
+
+  /* ---------- Generator bazy danych JSON dla Panelu Muraven ---------- */
+  generatePanelMuravenDb(baseDb = null) {
+    const workLog = [];
+    const personnelSet = new Set();
+    const projectsSet = new Set();
+    const schedule = {};
+    const yearsSet = new Set();
+
+    const keys = Object.keys(Store.data).sort();
+    let counter = 0;
+
+    keys.forEach(date => {
+      const day = Store.get(date);
+      if (!day || !day.jobs) return;
+
+      const dateYear = date.slice(0, 4);
+      yearsSet.add(dateYear);
+
+      day.jobs.forEach((job, jobIndex) => {
+        if (job.status === 'moved') return;
+        const project = (job.place || 'Prace ogólne').trim();
+        if (project) {
+          projectsSet.add(project);
+          if (!schedule[date]) schedule[date] = ['', '', ''];
+          const emptySlot = schedule[date].findIndex(s => !s);
+          if (emptySlot !== -1 && !schedule[date].includes(project)) {
+            schedule[date][emptySlot] = project;
+          }
+        }
+
+        (job.people || []).forEach((p, personIndex) => {
+          if (!p.name) return;
+          const empName = p.name.trim();
+          personnelSet.add(empName);
+
+          const ph = personHours(p);
+          const from = ph.real ? (p.realFrom || p.from) : (p.from || p.realFrom);
+          const to = ph.real ? (p.realTo || p.to) : (p.to || p.realTo);
+          const sT = from || '07:00';
+          const eT = to || '15:30';
+          const diff = ph.hours;
+          const notes = (p.note || '').trim();
+
+          counter++;
+          workLog.push({
+            id: p.id || `wl-${date.replace(/-/g, '')}-${jobIndex}-${personIndex}-${counter}`,
+            date: date,
+            employee: empName,
+            project: project,
+            timeRange: `${sT} - ${eT}`,
+            totalHours: Math.round(diff * 100) / 100,
+            notes: notes
+          });
+        });
+      });
+    });
+
+    // Bezpieczne scalanie z istniejącym plikiem bazy Panelu Muraven (jeśli wgrany)
+    if (baseDb && typeof baseDb === 'object') {
+      const existingWorkLog = Array.isArray(baseDb.workLog) ? baseDb.workLog : [];
+      const existingPersonnel = Array.isArray(baseDb.personnel) ? baseDb.personnel : [];
+      const existingProjects = Array.isArray(baseDb.projects) ? baseDb.projects : [];
+      const existingRbhYears = Array.isArray(baseDb.rbhYears) ? baseDb.rbhYears : [];
+
+      const mergedWorkLog = [...existingWorkLog];
+      workLog.forEach(newEntry => {
+        const isDuplicate = existingWorkLog.some(oldEntry =>
+          oldEntry.date === newEntry.date &&
+          String(oldEntry.employee).trim().toLowerCase() === String(newEntry.employee).trim().toLowerCase() &&
+          String(oldEntry.project).trim().toLowerCase() === String(newEntry.project).trim().toLowerCase() &&
+          String(oldEntry.timeRange).replace(/\s/g, '') === String(newEntry.timeRange).replace(/\s/g, '')
+        );
+        if (!isDuplicate) {
+          mergedWorkLog.push(newEntry);
+        }
+      });
+
+      const mergedPersonnel = [...new Set([...existingPersonnel, ...personnelSet])].sort((a, b) => a.localeCompare(b, 'pl'));
+
+      const mergedProjects = [...existingProjects];
+      projectsSet.forEach(pName => {
+        const exists = existingProjects.some(p => p && p.name && p.name.trim().toLowerCase() === pName.toLowerCase());
+        if (!exists) {
+          mergedProjects.push({
+            id: "P_" + new Date().getFullYear() + "_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+            year: String(new Date().getFullYear()),
+            name: pName,
+            budget: 0,
+            status: "W realizacji",
+            vatRate: 0.08
+          });
+        }
+      });
+
+      const mergedRbhYears = [...new Set([...existingRbhYears, ...yearsSet, String(new Date().getFullYear())])].sort();
+
+      return {
+        ...baseDb,
+        workLog: mergedWorkLog,
+        personnel: mergedPersonnel,
+        projects: mergedProjects,
+        schedule: { ...(baseDb.schedule || {}), ...schedule },
+        rbhYears: mergedRbhYears
+      };
+    }
+
+    // Nowy pełny obiekt zgodny ze strukturą bazy danych Panelu Muraven (DEFAULT_DB)
+    const currentYear = String(new Date().getFullYear());
+    const rbhYears = [...new Set([...yearsSet, currentYear])].sort();
+    const personnel = [...personnelSet].sort((a, b) => a.localeCompare(b, 'pl'));
+    const projects = [...projectsSet].map((pName, idx) => ({
+      id: "P_" + currentYear + "_" + (idx + 1),
+      year: currentYear,
+      name: pName,
+      budget: 0,
+      status: "W realizacji",
+      vatRate: 0.08
+    }));
+
+    return {
+      personnel,
+      workLog,
+      projects,
+      transactions: [],
+      accounts: [],
+      taxes: [],
+      schedule,
+      priceList: [],
+      materialRecipes: {},
+      history: [],
+      rates: {},
+      kpirYears: [currentYear],
+      scheduleYears: [currentYear],
+      folders: [],
+      scheduleColors: {},
+      portfolioYears: [],
+      portfolioFolders: {},
+      portfolioImages: [],
+      rbhYears
+    };
+  },
+
+  downloadPanelMuravenJson(baseDb = null) {
+    const data = this.generatePanelMuravenDb(baseDb);
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const todayStr = dateKey(new Date());
+    a.download = `muraven_dane_${todayStr}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(`Pobrano plik danych dla Panelu Muraven (${data.workLog.length} wpisów RBH)`);
+  },
+
+  handleMergeFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (!parsed || typeof parsed !== 'object') throw new Error('Nieprawidłowy format pliku');
+        this.downloadPanelMuravenJson(parsed);
+      } catch (err) {
+        toast('Błąd scalania bazy: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
   },
 
   /* ---------- Edycja i usuwanie wpisów godzin ---------- */
   openEditModal(key, jobIndex, personIndex) {
     const day = Store.get(key);
-    const job = day.jobs[jobIndex];
+    const job = day?.jobs?.[jobIndex];
     if (!job) return;
-    const person = job.people[personIndex];
+    const person = job.people?.[personIndex];
     if (!person) return;
 
     if ($('ehKey')) $('ehKey').value = key;
@@ -142,8 +555,8 @@ const Hours = {
     }
 
     const origDay = Store.get(origKey);
-    const origJob = origDay.jobs[jobIndex];
-    if (!origJob || !origJob.people[personIndex]) return;
+    const origJob = origDay?.jobs?.[jobIndex];
+    if (!origJob || !origJob.people?.[personIndex]) return;
 
     if (newDate === origKey) {
       const person = origJob.people[personIndex];
@@ -175,8 +588,8 @@ const Hours = {
 
   deleteEntry(key, jobIndex, personIndex) {
     const day = Store.get(key);
-    const job = day.jobs[jobIndex];
-    if (!job || !job.people[personIndex]) return;
+    const job = day?.jobs?.[jobIndex];
+    if (!job || !job.people?.[personIndex]) return;
     const personName = job.people[personIndex].name;
 
     if (!confirm(`Czy na pewno usunąć godziny dla: ${personName}?`)) return;
@@ -186,57 +599,6 @@ const Hours = {
     closeModal('editHoursModal');
     App.render();
     toast(`Usunięto godziny dla ${personName}`);
-  },
-
-  render() {
-    const people = this.collect();
-    const names = this.sortedNames(people);
-    const box = $('hoursList');
-
-    if (box) {
-      if (!names.length) {
-        box.innerHTML = '<div class="empty-state">Brak wprowadzonych godzin. Dodaj godziny w formularzu powyżej. 👍</div>';
-      } else {
-        box.innerHTML = names.map(name => {
-          const person = people[name];
-          return `
-            <section class="h-person">
-              <div class="h-person-head"><span>${esc(name)}</span><span>${fmtHours(person.total)}</span></div>
-              ${Object.keys(person.projects).sort((a, b) => a.localeCompare(b, 'pl')).map(pn => {
-                const proj = person.projects[pn];
-                return `
-                  <div class="h-project"><span>${esc(pn)}</span><span>${fmtHours(proj.total)}</span></div>
-                  ${proj.lines.map(l => {
-                    const time = this.timeRange(l);
-                    return `
-                    <div class="h-line">
-                      <span class="h-line-desc">
-                        <strong class="h-line-date">${this.lineLabel(l)}</strong>
-                        ${l.note ? ' · <span class="h-note">' + esc(l.note) + '</span>' : ''}
-                        ${l.real ? '' : '<span class="h-plan">plan</span>'}
-                      </span>
-                      <div class="h-line-right">
-                        <div class="h-line-hours-box">
-                          ${time ? `<span class="h-line-time ${l.real ? '' : 'plan'}" title="${l.real ? 'Rzeczywiste godziny pracy' : 'Zaplanowane godziny'}: ${time} (suma: ${fmtHours(l.hours)})">${time}</span>` : ''}
-                          <span class="h-line-val">${fmtHours(l.hours)}</span>
-                        </div>
-                        <div class="h-line-actions">
-                          <button type="button" class="btn small icon h-btn" data-edit-hours="${l.key}" data-job="${l.jobIndex}" data-person="${l.personIndex}" title="Edytuj te godziny">✏️</button>
-                          <button type="button" class="btn small icon danger h-btn" data-delete-hours="${l.key}" data-job="${l.jobIndex}" data-person="${l.personIndex}" title="Usuń te godziny">🗑️</button>
-                        </div>
-                      </div>
-                    </div>`;
-                  }).join('')}`;
-              }).join('')}
-            </section>`;
-        }).join('');
-      }
-    }
-
-    const totalEl = $('hoursTotalSumBadge');
-    if (totalEl) {
-      totalEl.textContent = fmtHours(this.totalSum());
-    }
   },
 
   copyText() {
@@ -264,8 +626,31 @@ const Hours = {
   },
 
   init() {
+    // 1. Kopiowanie tekstu
     $('copyHoursBtn')?.addEventListener('click', () => this.copyText());
 
+    // 2. Pobieranie bazy JSON dla Panelu Muraven
+    $('downloadRbhPackageBtn')?.addEventListener('click', () => this.downloadPanelMuravenJson());
+    $('menuDownloadRbhBtn')?.addEventListener('click', () => this.downloadPanelMuravenJson());
+
+    // 3. Scalanie z plikiem Panelu
+    $('mergeRbhInput')?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) this.handleMergeFile(file);
+      e.target.value = '';
+    });
+
+    // 4. Przełącznik widoków (Tabela RBH vs Podsumowanie)
+    $('rbhTabRegister')?.addEventListener('click', () => this.switchView('register'));
+    $('rbhTabSummary')?.addEventListener('click', () => this.switchView('summary'));
+
+    // 5. Zmiana filtrów tabeli
+    $('filterMainYear')?.addEventListener('change', () => this.renderTable());
+    $('filterMainMonth')?.addEventListener('change', () => this.renderTable());
+    $('filterMainEmployee')?.addEventListener('change', () => this.renderTable());
+    $('filterMainProject')?.addEventListener('change', () => this.renderTable());
+
+    // 6. Formularz dodawania godzin
     if ($('qhDate') && !$('qhDate').value) {
       $('qhDate').value = dateKey(new Date());
     }
@@ -279,7 +664,8 @@ const Hours = {
       this.submitQuick();
     });
 
-    $('hoursList')?.addEventListener('click', (e) => {
+    // 7. Delegacja kliknięć Edytuj / Usuń w tabeli i w kartach
+    const handleActionClick = (e) => {
       const editBtn = e.target.closest('[data-edit-hours]');
       if (editBtn) {
         return this.openEditModal(editBtn.dataset.editHours, Number(editBtn.dataset.job), Number(editBtn.dataset.person));
@@ -288,8 +674,12 @@ const Hours = {
       if (delBtn) {
         return this.deleteEntry(delBtn.dataset.deleteHours, Number(delBtn.dataset.job), Number(delBtn.dataset.person));
       }
-    });
+    };
 
+    $('kadryTableBody')?.addEventListener('click', handleActionClick);
+    $('hoursList')?.addEventListener('click', handleActionClick);
+
+    // 8. Modal edycji godzin
     $('ehFrom')?.addEventListener('input', () => this.recalcEditHours());
     $('ehTo')?.addEventListener('input', () => this.recalcEditHours());
 

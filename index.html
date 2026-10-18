@@ -147,61 +147,142 @@
     </section>
 
     <!-- ============ 3. MODUŁ DODAJ GODZINY ============ -->
+    <!-- ============ 3. MODUŁ DODAJ GODZINY / EWIDENCJA RBH ============ -->
     <section id="view-hours" class="view">
       <div class="hours-wrap">
         <div class="view-head">
-          <h2>Dodaj godziny i podsumowanie</h2>
+          <h2>Dodaj godziny i Ewidencja RBH</h2>
         </div>
 
-        <!-- Wzornik szybkiego dodawania godzin -->
+        <!-- Wzornik dodawania godzin (zgodny z Panelem RBH) -->
         <div class="hours-entry-card">
-          <h3>Wzornik dodawania godzin</h3>
-          <form id="quickHoursForm" class="quick-hours-form">
-            <div class="quick-form-grid">
-              <div class="form-group">
-                <label for="qhDate">Data</label>
-                <input type="date" id="qhDate" required>
-              </div>
-              <div class="form-group">
-                <label for="qhName">Imię i nazwisko</label>
-                <input type="text" id="qhName" list="peopleNames" placeholder="np. Tomasz Nowak" required>
-              </div>
-              <div class="form-group">
-                <label for="qhFrom">Od godziny</label>
-                <input type="time" id="qhFrom" value="07:00" required>
-              </div>
-              <div class="form-group">
-                <label for="qhTo">Do godziny</label>
-                <input type="time" id="qhTo" value="15:30" required>
-              </div>
-              <div class="form-group">
-                <label for="qhProject">Projekt / Budowa</label>
-                <input type="text" id="qhProject" placeholder="np. Tefra lub Ogólne">
-              </div>
-              <div class="form-group">
-                <label for="qhNote">Notatka</label>
-                <input type="text" id="qhNote" placeholder="np. co zrobiono">
-              </div>
+          <h3 style="margin-top:0; font-size: 19px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Dodaj wpis godzinowy</h3>
+          <form id="quickHoursForm" class="kadry-form">
+            <div class="kadry-input-group kadry-group-date">
+              <label for="qhDate">Data</label>
+              <input type="date" id="qhDate" class="kadry-input" required>
             </div>
-
-            <div class="quick-hours-actions">
-              <div class="calculated-hours-pill">
-                Czas pracy: <strong id="qhCalculated">8,5 h</strong>
-              </div>
-              <button type="submit" class="btn primary">+ Zapisz godziny</button>
+            <div class="kadry-input-group kadry-group-emp">
+              <label for="qhName">Pracownik</label>
+              <input type="text" id="qhName" list="peopleNames" class="kadry-input" placeholder="Wybierz lub wpisz..." required autocomplete="off">
+            </div>
+            <div class="kadry-input-group kadry-group-proj">
+              <label for="qhProject">Budowa (Projekt)</label>
+              <input type="text" id="qhProject" list="projectsDatalist" class="kadry-input" placeholder="Wybierz z listy..." autocomplete="off" required>
+              <datalist id="projectsDatalist"></datalist>
+            </div>
+            <div class="kadry-input-group kadry-group-notes">
+              <label for="qhNote">Opis prac (Notatka)</label>
+              <input type="text" id="qhNote" class="kadry-input" placeholder="Co było robione...">
+            </div>
+            <div class="kadry-input-group kadry-group-time">
+              <label for="qhFrom">Od (godz.)</label>
+              <input type="time" id="qhFrom" class="kadry-input" value="07:00" required>
+            </div>
+            <div class="kadry-input-group kadry-group-time">
+              <label for="qhTo">Do (godz.)</label>
+              <input type="time" id="qhTo" class="kadry-input" value="15:30" required>
+            </div>
+            <div class="kadry-action-group">
+              <button type="submit" class="kadry-btn-primary" id="qhSubmitBtn">Zapisz RBH</button>
             </div>
           </form>
-        </div>
 
-        <!-- Podsumowanie godzin -->
-        <div class="hours-summary-header">
-          <h3>Podsumowanie godzin</h3>
-          <div class="row wrap">
-            <span class="hours-total-badge">Suma: <span id="hoursTotalSumBadge">0 h</span></span>
-            <button id="copyHoursBtn" class="btn">Kopiuj jako tekst</button>
+          <div class="quick-hours-calculated-row">
+            <div class="calculated-hours-pill">
+              Czas pracy: <strong id="qhCalculated">8,5 h</strong>
+            </div>
           </div>
         </div>
-        <div id="hoursList"></div>
+
+        <!-- Pasek akcji pobierania danych i schowka -->
+        <div class="hours-actions-bar">
+          <div class="hours-actions-left">
+            <button type="button" id="downloadRbhPackageBtn" class="btn success-btn" title="Pobierz gotowy plik bazy danych JSON dla Panelu Muraven">
+              💾 Pobierz dane do Panelu Muraven (JSON)
+            </button>
+            <label class="btn outline-btn" title="Wczytaj swój plik bazy z Panelu Muraven i zaktualizuj go o nowe wpisy RBH">
+              🔄 Scal z plikiem Panelu
+              <input type="file" id="mergeRbhInput" accept=".json" hidden>
+            </label>
+            <button type="button" id="copyHoursBtn" class="btn">📋 Kopiuj jako tekst</button>
+          </div>
+          <div class="hours-actions-right">
+            <span class="hours-total-badge">Suma: <span id="hoursTotalSumBadge">0 h</span></span>
+          </div>
+        </div>
+
+        <!-- Przełącznik widoków (Rejestr RBH / Podsumowanie) -->
+        <div class="rbh-tabs-bar">
+          <button type="button" class="rbh-tab-btn active" id="rbhTabRegister">⏱️ Rejestr Godzin (Tabela)</button>
+          <button type="button" class="rbh-tab-btn" id="rbhTabSummary">📊 Podsumowanie wg projektów</button>
+        </div>
+
+        <!-- WIDOK 1: REJESTR GODZIN (TABELA RBH DOKŁADNIE JAK W PANELU) -->
+        <div id="rbhRegisterView" class="rbh-view-block">
+          <div class="payout-filter-bar">
+            <div class="payout-filter-group">
+              <label for="filterMainYear">ROK</label>
+              <select class="payout-select" id="filterMainYear"></select>
+            </div>
+            <div class="payout-filter-group">
+              <label for="filterMainMonth">MIESIĄC</label>
+              <select class="payout-select" id="filterMainMonth">
+                <option value="ALL">Cały Rok</option>
+                <option value="01">Styczeń</option>
+                <option value="02">Luty</option>
+                <option value="03">Marzec</option>
+                <option value="04">Kwiecień</option>
+                <option value="05">Maj</option>
+                <option value="06">Czerwiec</option>
+                <option value="07">Lipiec</option>
+                <option value="08">Sierpień</option>
+                <option value="09">Wrzesień</option>
+                <option value="10">Październik</option>
+                <option value="11">Listopad</option>
+                <option value="12">Grudzień</option>
+              </select>
+            </div>
+            <div class="payout-filter-group">
+              <label for="filterMainEmployee">PRACOWNIK</label>
+              <select class="payout-select" id="filterMainEmployee">
+                <option value="ALL">Wszyscy pracownicy</option>
+              </select>
+            </div>
+            <div class="payout-filter-group" style="flex: 1; min-width: 180px;">
+              <label for="filterMainProject">PROJEKT</label>
+              <select class="payout-select" id="filterMainProject" style="width: 100%;">
+                <option value="ALL">Wszystkie projekty</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="fin-table">
+              <thead>
+                <tr>
+                  <th style="width: 105px;">Data</th>
+                  <th>Pracownik</th>
+                  <th>Budowa</th>
+                  <th>Opis prac</th>
+                  <th style="width: 110px;">Godziny</th>
+                  <th style="width: 80px;">Suma (h)</th>
+                  <th style="width: 130px;">Akcje</th>
+                </tr>
+              </thead>
+              <tbody id="kadryTableBody">
+                <tr>
+                  <td colspan="7" style="text-align:center; padding: 20px; color:#64748b;">Ładowanie danych...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- WIDOK 2: PODSUMOWANIE PROJEKTOWE (KARTY) -->
+        <div id="rbhSummaryView" class="rbh-view-block" style="display: none;">
+          <div id="hoursList"></div>
+        </div>
       </div>
     </section>
 
@@ -459,8 +540,9 @@
         </section>
         <section class="block">
           <h3>Kopia danych</h3>
-          <div class="row wrap">
-            <button id="exportBtn" class="btn">Pobierz plik</button>
+          <div class="row wrap" style="gap: 8px;">
+            <button id="exportBtn" class="btn" title="Kopia zapasowa planu pracy">Pobierz kopię planu</button>
+            <button id="menuDownloadRbhBtn" class="btn success-btn" title="Pobierz gotową bazę danych dla Panelu Muraven">Pobierz do Panelu Muraven</button>
             <label class="btn">Wczytaj plik<input id="importInput" type="file" accept=".json" hidden></label>
             <button id="resetBtn" class="btn danger">Przykładowy plan</button>
           </div>

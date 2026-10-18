@@ -15,18 +15,29 @@ const Hours = {
           const proj = person.projects[project] = person.projects[project] || { total: 0, lines: [] };
           person.total += hours;
           proj.total += hours;
+          const from = real ? (p.realFrom || p.from) : (p.from || p.realFrom);
+          const to = real ? (p.realTo || p.to) : (p.to || p.realTo);
           proj.lines.push({
             key,
             jobIndex,
             personIndex,
             note: p.note || '',
             hours,
-            real
+            real,
+            from: from || '',
+            to: to || ''
           });
         });
       });
     });
     return people;
+  },
+
+  timeRange(l) {
+    if (l.from && l.to) return `${l.from} – ${l.to}`;
+    if (l.from) return `od ${l.from}`;
+    if (l.to) return `do ${l.to}`;
+    return '';
   },
 
   sortedNames(people) {
@@ -195,17 +206,27 @@ const Hours = {
                 const proj = person.projects[pn];
                 return `
                   <div class="h-project"><span>${esc(pn)}</span><span>${fmtHours(proj.total)}</span></div>
-                  ${proj.lines.map(l => `
+                  ${proj.lines.map(l => {
+                    const time = this.timeRange(l);
+                    return `
                     <div class="h-line">
-                      <span class="h-line-desc">${this.lineLabel(l)}${l.note ? ' · <span class="h-note">' + esc(l.note) + '</span>' : ''}${l.real ? '' : '<span class="h-plan">plan</span>'}</span>
+                      <span class="h-line-desc">
+                        <strong class="h-line-date">${this.lineLabel(l)}</strong>
+                        ${l.note ? ' · <span class="h-note">' + esc(l.note) + '</span>' : ''}
+                        ${l.real ? '' : '<span class="h-plan">plan</span>'}
+                      </span>
                       <div class="h-line-right">
-                        <span class="h-line-val">${fmtHours(l.hours)}</span>
+                        <div class="h-line-hours-box">
+                          ${time ? `<span class="h-line-time ${l.real ? '' : 'plan'}" title="${l.real ? 'Rzeczywiste godziny pracy' : 'Zaplanowane godziny'}: ${time} (suma: ${fmtHours(l.hours)})">${time}</span>` : ''}
+                          <span class="h-line-val">${fmtHours(l.hours)}</span>
+                        </div>
                         <div class="h-line-actions">
                           <button type="button" class="btn small icon h-btn" data-edit-hours="${l.key}" data-job="${l.jobIndex}" data-person="${l.personIndex}" title="Edytuj te godziny">✏️</button>
                           <button type="button" class="btn small icon danger h-btn" data-delete-hours="${l.key}" data-job="${l.jobIndex}" data-person="${l.personIndex}" title="Usuń te godziny">🗑️</button>
                         </div>
                       </div>
-                    </div>`).join('')}`;
+                    </div>`;
+                  }).join('')}`;
               }).join('')}
             </section>`;
         }).join('');
@@ -227,7 +248,11 @@ const Hours = {
       const person = people[name];
       const projects = Object.keys(person.projects).sort((a, b) => a.localeCompare(b, 'pl')).map(pn => {
         const proj = person.projects[pn];
-        const lines = proj.lines.map(l => `    ${this.lineLabel(l)}: ${fmtHours(l.hours)}${l.note ? ' · ' + l.note : ''}${l.real ? '' : ' (plan)'}`).join('\n');
+        const lines = proj.lines.map(l => {
+          const time = this.timeRange(l);
+          const timeSuffix = time ? ` (${time})` : '';
+          return `    ${this.lineLabel(l)}${timeSuffix}: ${fmtHours(l.hours)}${l.note ? ' · ' + l.note : ''}${l.real ? '' : ' (plan)'}`;
+        }).join('\n');
         return `  ${pn} – ${fmtHours(proj.total)}\n${lines}`;
       }).join('\n');
       return `${name} – RAZEM ${fmtHours(person.total)}\n${projects}`;

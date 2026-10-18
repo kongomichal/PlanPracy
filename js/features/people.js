@@ -10,7 +10,19 @@ const People = {
     Plan.keys().forEach(key => {
       Store.get(key).jobs.forEach((job, jobIndex) => {
         job.people.forEach(p => {
-          (map[p.name] = map[p.name] || []).push({ key, jobIndex, goal: job.goal, place: job.place, from: p.from, to: p.to });
+          const ph = personHours(p);
+          const from = ph.real ? (p.realFrom || p.from) : (p.from || p.realFrom);
+          const to = ph.real ? (p.realTo || p.to) : (p.to || p.realTo);
+          (map[p.name] = map[p.name] || []).push({
+            key,
+            jobIndex,
+            goal: job.goal,
+            place: job.place,
+            from: from || p.from || '',
+            to: to || p.to || '',
+            hours: ph.hours,
+            real: ph.real
+          });
         });
       });
     });
@@ -23,7 +35,7 @@ const People = {
 
     $('peopleList').innerHTML = names.map(name => {
       const lines = map[name];
-      const total = lines.reduce((s, l) => s + hoursBetween(l.from, l.to), 0);
+      const total = lines.reduce((s, l) => s + l.hours, 0);
       const days = new Set(lines.map(l => l.key)).size;
       return `
         <section class="person">
@@ -32,10 +44,11 @@ const People = {
             const d = parseKey(l.key);
             const clash = lines.some(o => o !== l && o.key === l.key &&
               this.toMinutes(o.from) < this.toMinutes(l.to) && this.toMinutes(l.from) < this.toMinutes(o.to));
+            const timeRange = (l.from && l.to) ? `${l.from}–${l.to}` : (l.from || l.to || '');
             return `<div class="person-line" data-date="${l.key}" data-job="${l.jobIndex}">
               <span><b>${DAYS_SHORT[d.getDay()]} ${shortDate(d)}</b> ${esc(l.place) || '—'}${l.goal ? ' · ' + esc(l.goal) : ''}
                 ${clash ? '<b style="color:var(--red)"> ⚠ nakłada się z inną pracą</b>' : ''}</span>
-              <span>${l.from}–${l.to}</span>
+              <span>${timeRange ? `${timeRange} (${fmtHours(l.hours)})` : fmtHours(l.hours)}</span>
             </div>`;
           }).join('')}
         </section>`;

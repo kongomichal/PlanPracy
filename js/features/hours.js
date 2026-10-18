@@ -489,6 +489,48 @@ const Hours = {
     a.click();
     URL.revokeObjectURL(a.href);
     toast(`Pobrano plik danych dla Panelu Muraven (${data.workLog.length} wpisów RBH)`);
+
+    // Zapytanie o automatyczne usunięcie wyeksportowanych godzin z widoku
+    if (data.workLog.length > 0) {
+      setTimeout(() => {
+        if (confirm(`Pobrano plik bazy z ${data.workLog.length} wpisami RBH.\n\nCzy chcesz teraz automatycznie usunąć wyeksportowane godziny z widoku planera?`)) {
+          this.clearAllHours(false);
+        }
+      }, 400);
+    }
+  },
+
+  /** Usuwa wszystkie wprowadzone godziny ze wszystkich dni. */
+  clearAllHours(confirmPrompt = true) {
+    if (confirmPrompt) {
+      if (!confirm('Czy na pewno chcesz usunąć wszystkie wprowadzone godziny ze wszystkich dni?\n\nTej operacji nie można cofnąć bez posiadania kopii zapasowej (pliku JSON).')) {
+        return false;
+      }
+    }
+
+    let totalRemoved = 0;
+    Object.keys(Store.data).forEach(date => {
+      const day = Store.get(date);
+      if (!day || !Array.isArray(day.jobs)) return;
+
+      let changed = false;
+      day.jobs.forEach(job => {
+        if (Array.isArray(job.people) && job.people.length > 0) {
+          totalRemoved += job.people.length;
+          job.people = [];
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        day.jobs = day.jobs.filter(j => Store.jobHasContent(j));
+        Store.set(date, day);
+      }
+    });
+
+    App.render();
+    toast(`Wyczyszczono wszystkie godziny (${totalRemoved} wpisów)`);
+    return true;
   },
 
   handleMergeFile(file) {
@@ -694,5 +736,8 @@ const Hours = {
       const personIndex = Number($('ehPersonIndex')?.value);
       this.deleteEntry(origKey, jobIndex, personIndex);
     });
+
+    // 9. Przycisk usuwania wszystkich godzin na dole strony
+    $('clearAllHoursBtn')?.addEventListener('click', () => this.clearAllHours(true));
   }
 };

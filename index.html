@@ -11,14 +11,14 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Muraven – prosty plan pracy, rejestracja godzin i przypomnienia.">
   <title>Muraven – Plan pracy</title>
-  <link rel="stylesheet" href="css/base.css?v=14">
-  <link rel="stylesheet" href="css/layout.css?v=14">
-  <link rel="stylesheet" href="css/components.css?v=14">
-  <link rel="stylesheet" href="css/modals.css?v=14">
-  <link rel="stylesheet" href="css/jobs.css?v=14">
-  <link rel="stylesheet" href="css/dashboard.css?v=14">
-  <link rel="stylesheet" href="css/reminders.css?v=14">
-  <link rel="stylesheet" href="css/hours.css?v=14">
+  <link rel="stylesheet" href="css/base.css?v=17">
+  <link rel="stylesheet" href="css/layout.css?v=17">
+  <link rel="stylesheet" href="css/components.css?v=17">
+  <link rel="stylesheet" href="css/modals.css?v=17">
+  <link rel="stylesheet" href="css/jobs.css?v=17">
+  <link rel="stylesheet" href="css/dashboard.css?v=17">
+  <link rel="stylesheet" href="css/reminders.css?v=17">
+  <link rel="stylesheet" href="css/hours.css?v=17">
 </head>
 <body>
 
@@ -168,7 +168,11 @@
             </div>
             <div class="kadry-input-group kadry-group-proj">
               <label for="qhProject">Budowa (Projekt)</label>
-              <input type="text" id="qhProject" list="projectsDatalist" class="kadry-input" placeholder="Wybierz z listy..." autocomplete="off" required>
+              <div class="proj-combo-wrap" id="qhProjectCombo">
+                <input type="text" id="qhProject" class="kadry-input proj-combo-input" placeholder="Wpisz lub wybierz z listy..." autocomplete="off" required>
+                <button type="button" class="proj-combo-toggle" id="qhProjectToggle" title="Pokaż / ukryj listę projektów" aria-label="Pokaż listę projektów" tabindex="-1">▾</button>
+                <div class="proj-combo-dropdown" id="qhProjectDropdown" hidden></div>
+              </div>
               <datalist id="projectsDatalist"></datalist>
             </div>
             <div class="kadry-input-group kadry-group-notes">
@@ -361,7 +365,7 @@
         <section class="block">
           <h3>1. Projekt / Miejsce</h3>
           <label for="fPlace">Projekt</label>
-          <input id="fPlace" type="text" placeholder="np. Tefra - N2 lub Wilanów, ul. Różana 14">
+          <input id="fPlace" type="text" list="projectsDatalist" placeholder="np. Tefra - N2 lub Wilanów, ul. Różana 14">
         </section>
 
         <section class="block">
@@ -474,7 +478,7 @@
 
           <div class="form-group" style="margin-bottom: 12px;">
             <label for="ehProject">Projekt / Budowa</label>
-            <input type="text" id="ehProject" placeholder="np. Tefra - N2 lub Wilanów">
+            <input type="text" id="ehProject" list="projectsDatalist" placeholder="np. Tefra - N2 lub Wilanów">
           </div>
 
           <div class="form-group" style="margin-bottom: 14px;">
@@ -578,19 +582,19 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=16"></script>
-  <script src="js/core/utils.js?v=16"></script>
-  <script src="js/core/sample-data.js?v=16"></script>
-  <script src="js/core/storage.js?v=16"></script>
-  <script src="js/features/auth.js?v=16"></script>
-  <script src="js/features/plan.js?v=16"></script>
-  <script src="js/features/day-editor.js?v=16"></script>
-  <script src="js/features/items.js?v=16"></script>
-  <script src="js/features/people.js?v=16"></script>
-  <script src="js/features/hours.js?v=16"></script>
-  <script src="js/features/reminders.js?v=16"></script>
-  <script src="js/features/job-view.js?v=16"></script>
-  <script src="js/features/menu.js?v=16"></script>
-  <script src="js/main.js?v=16"></script>
+  <script src="js/core/firebase-config.js?v=17"></script>
+  <script src="js/core/utils.js?v=17"></script>
+  <script src="js/core/sample-data.js?v=17"></script>
+  <script src="js/core/storage.js?v=17"></script>
+  <script src="js/features/auth.js?v=17"></script>
+  <script src="js/features/plan.js?v=17"></script>
+  <script src="js/features/day-editor.js?v=17"></script>
+  <script src="js/features/items.js?v=17"></script>
+  <script src="js/features/people.js?v=17"></script>
+  <script src="js/features/hours.js?v=17"></script>
+  <script src="js/features/reminders.js?v=17"></script>
+  <script src="js/features/job-view.js?v=17"></script>
+  <script src="js/features/menu.js?v=17"></script>
+  <script src="js/main.js?v=17"></script>
 </body>
 </html>

@@ -10,10 +10,14 @@ const Store = {
   REMINDERS_KEY: 'muraven_reminders_v1',
   reminders: null,
 
+  PROJECTS_KEY: 'muraven_projects_v1',
+  projectsMeta: null,
+
   col() { return firebase.firestore().collection('days'); },
 
   load() {
     this.loadReminders();
+    this.loadProjects();
     if (CLOUD_ENABLED) { this.data = {}; return; } // dane przyjdą z chmury po zalogowaniu
     try {
       const raw = localStorage.getItem(this.KEY);
@@ -34,11 +38,14 @@ const Store = {
     this.unsub = this.col().onSnapshot((snap) => {
       const raw = {};
       let cloudReminders = null;
+      let cloudProjects = null;
 
       snap.forEach(doc => {
         if (doc.id === '_reminders') {
           cloudReminders = doc.data();
-        } else {
+        } else if (doc.id === '_projects') {
+          cloudProjects = doc.data();
+        } else if (!doc.id.startsWith('_')) {
           raw[doc.id] = doc.data();
         }
       });
@@ -56,6 +63,16 @@ const Store = {
         this.saveReminders();
       }
 
+      if (cloudProjects && (Array.isArray(cloudProjects.custom) || Array.isArray(cloudProjects.deleted))) {
+        this.projectsMeta = {
+          custom: Array.isArray(cloudProjects.custom) ? cloudProjects.custom : [],
+          deleted: Array.isArray(cloudProjects.deleted) ? cloudProjects.deleted : []
+        };
+        localStorage.setItem(this.PROJECTS_KEY, JSON.stringify(this.projectsMeta));
+      } else if (!cloudProjects && this.projectsMeta && firebase.auth && firebase.auth().currentUser) {
+        this.saveProjects();
+      }
+
       onChange();
     }, (err) => { console.error(err); toast('Brak połączenia z bazą danych'); });
   },
@@ -66,20 +83,21 @@ const Store = {
     if (CLOUD_ENABLED) {
       this.data = {};
       this.reminders = null;
+      this.projectsMeta = null;
     }
   },
 
-  /** Zastępuje wszystkie dane w chmurze podanymi (nie naruszając przypomnień). */
+  /** Zastępuje wszystkie dane w chmurze podanymi (nie naruszając przypomnień i listy projektów). */
   replaceAll(newData) {
     this.data = newData;
     if (!CLOUD_ENABLED) return this.save();
     const batch = firebase.firestore().batch();
     Object.keys(newData).forEach(k => {
-      if (k !== '_reminders') batch.set(this.col().doc(k), newData[k]);
+      if (!k.startsWith('_')) batch.set(this.col().doc(k), newData[k]);
     });
     this.col().get().then(snap => {
       snap.forEach(doc => {
-        if (doc.id !== '_reminders' && !newData[doc.id]) {
+        if (!doc.id.startsWith('_') && !newData[doc.id]) {
           batch.delete(doc.ref);
         }
       });
@@ -234,10 +252,162 @@ const Store = {
     }
   },
 
+  loadProjects() {
+    try {
+      const raw = localStorage.getItem(this.PROJECTS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        this.projectsMeta = {
+          custom: Array.isArray(parsed?.custom) ? parsed.custom : [],
+          deleted: Array.isArray(parsed?.deleted) ? parsed.deleted : []
+        };
+        return this.projectsMeta;
+      }
+    } catch (e) { console.error('Błąd odczytu projektów', e); }
+    this.projectsMeta = { custom: [], deleted: [] };
+    if (!CLOUD_ENABLED) {
+      this.saveProjects();
+    }
+    return this.projectsMeta;
+  },
+
+  saveProjects() {
+    if (!this.projectsMeta) return;
+    localStorage.setItem(this.PROJECTS_KEY, JSON.stringify(this.projectsMeta));
+    if (CLOUD_ENABLED && firebase.firestore && firebase.auth && firebase.auth().currentUser) {
+      this.col().doc('_projects').set(JSON.parse(JSON.stringify(this.projectsMeta)))
+        .catch((err) => console.error('Błąd zapisu projektów w chmurze', err));
+    }
+  },
+
+  /** Zwraca posortowaną listę aktywnych projektów (z historii + dodane ręcznie, z pominięciem usuniętych). */
+  getProjects() {
+    if (!this.projectsMeta) this.loadProjects();
+    const deletedLower = new Set(
+      (this.projectsMeta.deleted || []).map(p => String(p).trim().toLowerCase()).filter(Boolean)
+    );
+    const map = new Map(); // lower -> original
+
+    (this.projectsMeta.custom || []).forEach(p => {
+      const trimmed = String(p || '').trim();
+      if (!trimmed) return;
+      const lower = trimmed.toLowerCase();
+      if (!deletedLower.has(lower)) {
+        map.set(lower, trimmed);
+      }
+    });
+
+    Object.values(this.data || {}).forEach(d => {
+      (d.jobs || []).forEach(j => {
+        const trimmed = (j.place || '').trim();
+        if (!trimmed) return;
+        const lower = trimmed.toLowerCase();
+        if (!deletedLower.has(lower) && !map.has(lower)) {
+          map.set(lower, trimmed);
+        }
+      });
+    });
+
+    return [...map.values()].sort((a, b) => a.localeCompare(b, 'pl'));
+  },
+
+  /** Dodaje projekt do listy (i przywraca, jeśli był wcześniej usunięty). */
+  ensureProject(name) {
+    const trimmed = String(name || '').trim();
+    if (!trimmed) return false;
+    if (!this.projectsMeta) this.loadProjects();
+    const lower = trimmed.toLowerCase();
+
+    let changed = false;
+    const prevDelLen = this.projectsMeta.deleted.length;
+    this.projectsMeta.deleted = this.projectsMeta.deleted.filter(
+      p => String(p).trim().toLowerCase() !== lower
+    );
+    if (this.projectsMeta.deleted.length !== prevDelLen) changed = true;
+
+    const existingIdx = this.projectsMeta.custom.findIndex(
+      p => String(p).trim().toLowerCase() === lower
+    );
+    if (existingIdx === -1) {
+      this.projectsMeta.custom.push(trimmed);
+      changed = true;
+    } else if (this.projectsMeta.custom[existingIdx] !== trimmed) {
+      this.projectsMeta.custom[existingIdx] = trimmed;
+      changed = true;
+    }
+
+    if (changed) this.saveProjects();
+    return true;
+  },
+
+  /** Usuwa projekt z listy podpowiedzi (ukrywa go także jeśli występował w starszych wpisach). */
+  deleteProject(name) {
+    const trimmed = String(name || '').trim();
+    if (!trimmed) return false;
+    if (!this.projectsMeta) this.loadProjects();
+    const lower = trimmed.toLowerCase();
+
+    this.projectsMeta.custom = this.projectsMeta.custom.filter(
+      p => String(p).trim().toLowerCase() !== lower
+    );
+    const alreadyDeleted = this.projectsMeta.deleted.some(
+      p => String(p).trim().toLowerCase() === lower
+    );
+    if (!alreadyDeleted) {
+      this.projectsMeta.deleted.push(trimmed);
+    }
+    this.saveProjects();
+    return true;
+  },
+
+  /** Zmienia nazwę projektu na liście oraz aktualizuje istniejące wpisy z tą nazwą budowy. */
+  renameProject(oldName, newName) {
+    const oldTrim = String(oldName || '').trim();
+    const newTrim = String(newName || '').trim();
+    if (!oldTrim || !newTrim) return false;
+    if (!this.projectsMeta) this.loadProjects();
+
+    const oldLower = oldTrim.toLowerCase();
+    const newLower = newTrim.toLowerCase();
+
+    this.projectsMeta.custom = this.projectsMeta.custom.filter(
+      p => String(p).trim().toLowerCase() !== oldLower && String(p).trim().toLowerCase() !== newLower
+    );
+    this.projectsMeta.custom.push(newTrim);
+
+    this.projectsMeta.deleted = this.projectsMeta.deleted.filter(
+      p => String(p).trim().toLowerCase() !== newLower
+    );
+    if (oldLower !== newLower) {
+      const alreadyDel = this.projectsMeta.deleted.some(p => String(p).trim().toLowerCase() === oldLower);
+      if (!alreadyDel) this.projectsMeta.deleted.push(oldTrim);
+    }
+
+    // Zaktualizuj również istniejące dni, które miały przypisany stary projekt
+    Object.keys(this.data || {}).forEach(date => {
+      const day = this.get(date);
+      if (!day || !Array.isArray(day.jobs)) return;
+      let dayChanged = false;
+      day.jobs.forEach(job => {
+        if ((job.place || '').trim().toLowerCase() === oldLower) {
+          job.place = newTrim;
+          dayChanged = true;
+        }
+      });
+      if (dayChanged) {
+        this.set(date, day);
+      }
+    });
+
+    this.saveProjects();
+    return true;
+  },
+
   addHoursEntry({ date, name, from, to, project, note }) {
     if (!date || !name || !from || !to) return false;
     const day = this.get(date);
     const projName = (project || '').trim() || 'Prace ogólne';
+    this.ensureProject(projName);
 
     // Znajdź istniejącą pracę z tym projektem lub stwórz nową
     let job = day.jobs.find(j => (j.place || '').toLowerCase() === projName.toLowerCase());
@@ -270,7 +440,8 @@ const Store = {
   exportJson() {
     return JSON.stringify({
       days: this.data,
-      reminders: this.reminders || this.loadReminders()
+      reminders: this.reminders || this.loadReminders(),
+      projectsMeta: this.projectsMeta || this.loadProjects()
     }, null, 2);
   },
 
@@ -282,6 +453,13 @@ const Store = {
       if (parsed.reminders) {
         this.reminders = parsed.reminders;
         this.saveReminders();
+      }
+      if (parsed.projectsMeta) {
+        this.projectsMeta = {
+          custom: Array.isArray(parsed.projectsMeta.custom) ? parsed.projectsMeta.custom : [],
+          deleted: Array.isArray(parsed.projectsMeta.deleted) ? parsed.projectsMeta.deleted : []
+        };
+        this.saveProjects();
       }
     } else {
       this.replaceAll(this.normalize(parsed));

@@ -5,6 +5,8 @@ const Hours = {
   filterMonth: 'ALL',
   filterEmployee: 'ALL',
   filterProject: 'ALL',
+  editingProjectName: null,
+  dropdownShowAll: true,
 
   /** Zbiera dane w strukturze: osoba -> projekt -> wpisy (dla widoku kart). */
   collect() {
@@ -152,7 +154,7 @@ const Hours = {
       // Przygotuj formularz do kolejnego wpisu
       $('qhProject').value = '';
       if ($('qhNote')) $('qhNote').value = '';
-      $('qhProject').focus();
+      this.closeProjectDropdown();
     }
   },
 
@@ -205,14 +207,134 @@ const Hours = {
       dl.id = 'projectsDatalist';
       document.body.appendChild(dl);
     }
-    const projects = new Set();
-    Object.values(Store.data).forEach(d => {
-      (d.jobs || []).forEach(j => {
-        if (j.place && j.place.trim()) projects.add(j.place.trim());
-      });
-    });
-    dl.innerHTML = [...projects].sort((a, b) => a.localeCompare(b, 'pl'))
+    const projects = Store.getProjects();
+    dl.innerHTML = projects
       .map(p => `<option value="${esc(p)}">`).join('');
+
+    const dd = $('qhProjectDropdown');
+    if (dd && !dd.hidden) {
+      this.renderProjectDropdown();
+    }
+  },
+
+  openProjectDropdown(showAll = false) {
+    const dd = $('qhProjectDropdown');
+    if (!dd) return;
+    this.dropdownShowAll = showAll;
+    this.renderProjectDropdown();
+    dd.hidden = false;
+  },
+
+  closeProjectDropdown() {
+    const dd = $('qhProjectDropdown');
+    if (!dd) return;
+    this.editingProjectName = null;
+    dd.hidden = true;
+  },
+
+  renderProjectDropdown() {
+    const dd = $('qhProjectDropdown');
+    if (!dd) return;
+
+    const allProjects = Store.getProjects();
+    const query = ($('qhProject')?.value || '').trim();
+    const queryLower = query.toLowerCase();
+
+    const filtered = (this.dropdownShowAll || !query)
+      ? allProjects
+      : allProjects.filter(p => p.toLowerCase().includes(queryLower));
+
+    const exactExists = query && allProjects.some(p => p.toLowerCase() === queryLower);
+
+    let html = '';
+
+    if (query && !exactExists) {
+      html += `
+        <button type="button" class="proj-combo-add-new" data-add-new-proj="${esc(query)}">
+          <span>＋ Dodaj projekt: <strong>"${esc(query)}"</strong></span>
+        </button>`;
+    }
+
+    if (filtered.length > 0) {
+      html += `
+        <div class="proj-combo-header">
+          <span>Wybierz projekt (${filtered.length})</span>
+          <span>Edytuj / Usuń</span>
+        </div>`;
+
+      html += filtered.map(p => {
+        if (this.editingProjectName === p) {
+          return `
+            <div class="proj-combo-item is-active" data-proj-row="${esc(p)}">
+              <div class="proj-combo-edit-row">
+                <input type="text" class="proj-combo-edit-input" value="${esc(p)}" data-orig-proj="${esc(p)}" autocomplete="off">
+                <button type="button" class="proj-combo-btn save" data-save-proj="${esc(p)}" title="Zapisz nową nazwę">✓</button>
+                <button type="button" class="proj-combo-btn" data-cancel-proj title="Anuluj edycję">✕</button>
+              </div>
+            </div>`;
+        }
+        return `
+          <div class="proj-combo-item" data-proj-row="${esc(p)}">
+            <span class="proj-combo-name" data-select-proj="${esc(p)}">${esc(p)}</span>
+            <div class="proj-combo-actions">
+              <button type="button" class="proj-combo-btn edit" data-edit-proj="${esc(p)}" title="Zmień nazwę tego projektu">✏️</button>
+              <button type="button" class="proj-combo-btn del" data-del-proj="${esc(p)}" title="Usuń ten projekt z listy">✕</button>
+            </div>
+          </div>`;
+      }).join('');
+    } else if (!query) {
+      html += `<div class="proj-combo-empty">Brak zapisanych projektów. Wpisz nazwę w polu powyżej.</div>`;
+    } else {
+      html += `<div class="proj-combo-empty">Brak pasujących projektów na liście — możesz zapisać wpis z wpisaną nazwą lub kliknąć „＋ Dodaj projekt” powyżej.</div>`;
+    }
+
+    dd.innerHTML = html;
+
+    if (this.editingProjectName) {
+      const inp = dd.querySelector('.proj-combo-edit-input');
+      if (inp) {
+        setTimeout(() => {
+          inp.focus();
+          inp.select();
+        }, 10);
+      }
+    }
+  },
+
+  saveEditedProject(oldName, newName) {
+    const trimmedNew = String(newName || '').trim();
+    const trimmedOld = String(oldName || '').trim();
+    if (!trimmedNew) {
+      toast('Nazwa projektu nie może być pusta');
+      return;
+    }
+    this.editingProjectName = null;
+    if (trimmedNew !== trimmedOld) {
+      Store.renameProject(trimmedOld, trimmedNew);
+      const qhInput = $('qhProject');
+      if (qhInput && qhInput.value.trim().toLowerCase() === trimmedOld.toLowerCase()) {
+        qhInput.value = trimmedNew;
+      }
+      App.render();
+      this.openProjectDropdown(true);
+      toast(`Zmieniono nazwę projektu na „${trimmedNew}”`);
+    } else {
+      this.renderProjectDropdown();
+    }
+  },
+
+  deleteProjectFromList(projName) {
+    const trimmed = String(projName || '').trim();
+    if (!trimmed) return;
+    Store.deleteProject(trimmed);
+    const qhInput = $('qhProject');
+    if (qhInput && qhInput.value.trim().toLowerCase() === trimmed.toLowerCase()) {
+      qhInput.value = '';
+    }
+    this.editingProjectName = null;
+    this.refreshProjectSuggestions();
+    this.openProjectDropdown(true);
+    toast(`Usunięto projekt „${trimmed}” z listy wyboru`);
   },
 
   /* ---------- Renderowanie tabeli Rejestru Godzin RBH ---------- */
@@ -608,7 +730,10 @@ const Hours = {
       person.realFrom = newFrom;
       person.realTo = newTo;
       person.note = newNote;
-      if (newProject) origJob.place = newProject;
+      if (newProject) {
+        origJob.place = newProject;
+        Store.ensureProject(newProject);
+      }
       Store.set(origKey, origDay);
     } else {
       origJob.people.splice(personIndex, 1);
@@ -704,6 +829,115 @@ const Hours = {
     $('quickHoursForm')?.addEventListener('submit', (e) => {
       e.preventDefault();
       this.submitQuick();
+    });
+
+    // 6b. Pasek wyboru, edycji i usuwania projektów (Budowa / Projekt)
+    const projInput = $('qhProject');
+    const projToggle = $('qhProjectToggle');
+    const projDropdown = $('qhProjectDropdown');
+
+    projInput?.addEventListener('focus', () => {
+      this.openProjectDropdown(true);
+    });
+
+    projInput?.addEventListener('click', () => {
+      if (projDropdown?.hidden) {
+        this.openProjectDropdown(true);
+      }
+    });
+
+    projInput?.addEventListener('input', () => {
+      this.editingProjectName = null;
+      this.openProjectDropdown(false);
+    });
+
+    projInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.closeProjectDropdown();
+      }
+    });
+
+    projToggle?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (projDropdown?.hidden) {
+        this.openProjectDropdown(true);
+        projInput?.focus();
+      } else {
+        this.closeProjectDropdown();
+      }
+    });
+
+    projDropdown?.addEventListener('click', (e) => {
+      e.stopPropagation();
+
+      const selectBtn = e.target.closest('[data-select-proj]');
+      if (selectBtn) {
+        if (projInput) projInput.value = selectBtn.dataset.selectProj;
+        this.closeProjectDropdown();
+        return;
+      }
+
+      const addNewBtn = e.target.closest('[data-add-new-proj]');
+      if (addNewBtn) {
+        const newProj = addNewBtn.dataset.addNewProj;
+        Store.ensureProject(newProj);
+        if (projInput) projInput.value = newProj;
+        this.refreshProjectSuggestions();
+        this.closeProjectDropdown();
+        toast(`Dodano projekt „${newProj}” do listy`);
+        return;
+      }
+
+      const editBtn = e.target.closest('[data-edit-proj]');
+      if (editBtn) {
+        this.editingProjectName = editBtn.dataset.editProj;
+        this.renderProjectDropdown();
+        return;
+      }
+
+      const cancelBtn = e.target.closest('[data-cancel-proj]');
+      if (cancelBtn) {
+        this.editingProjectName = null;
+        this.renderProjectDropdown();
+        return;
+      }
+
+      const saveBtn = e.target.closest('[data-save-proj]');
+      if (saveBtn) {
+        const origName = saveBtn.dataset.saveProj;
+        const row = saveBtn.closest('.proj-combo-item');
+        const inp = row?.querySelector('.proj-combo-edit-input');
+        this.saveEditedProject(origName, inp ? inp.value : '');
+        return;
+      }
+
+      const delBtn = e.target.closest('[data-del-proj]');
+      if (delBtn) {
+        this.deleteProjectFromList(delBtn.dataset.delProj);
+        return;
+      }
+    });
+
+    projDropdown?.addEventListener('keydown', (e) => {
+      if (!e.target.classList.contains('proj-combo-edit-input')) return;
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        const origName = e.target.dataset.origProj;
+        this.saveEditedProject(origName, e.target.value);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.editingProjectName = null;
+        this.renderProjectDropdown();
+      }
+    });
+
+    document.addEventListener('mousedown', (e) => {
+      if (!e.target.closest('#qhProjectCombo')) {
+        this.closeProjectDropdown();
+      }
     });
 
     // 7. Delegacja kliknięć Edytuj / Usuń w tabeli i w kartach

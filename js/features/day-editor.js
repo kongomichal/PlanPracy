@@ -191,6 +191,9 @@ const DayEditor = {
     if (!this.key) return;
     this.jobs[this.current] = this.collect();
     const jobs = this.jobs.filter(j => Store.jobHasContent(j));
+    jobs.forEach(j => {
+      if (j.place && j.place.trim()) Store.ensureProject(j.place.trim());
+    });
     Store.set(this.key, { date: this.key, jobs });
     this.close();
     App.render();

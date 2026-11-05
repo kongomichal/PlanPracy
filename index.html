@@ -11,14 +11,14 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Muraven – prosty plan pracy, rejestracja godzin i przypomnienia.">
   <title>Muraven – Plan pracy</title>
-  <link rel="stylesheet" href="css/base.css?v=17">
-  <link rel="stylesheet" href="css/layout.css?v=17">
-  <link rel="stylesheet" href="css/components.css?v=17">
-  <link rel="stylesheet" href="css/modals.css?v=17">
-  <link rel="stylesheet" href="css/jobs.css?v=17">
-  <link rel="stylesheet" href="css/dashboard.css?v=17">
-  <link rel="stylesheet" href="css/reminders.css?v=17">
-  <link rel="stylesheet" href="css/hours.css?v=17">
+  <link rel="stylesheet" href="css/base.css?v=18">
+  <link rel="stylesheet" href="css/layout.css?v=18">
+  <link rel="stylesheet" href="css/components.css?v=18">
+  <link rel="stylesheet" href="css/modals.css?v=18">
+  <link rel="stylesheet" href="css/jobs.css?v=18">
+  <link rel="stylesheet" href="css/dashboard.css?v=18">
+  <link rel="stylesheet" href="css/reminders.css?v=18">
+  <link rel="stylesheet" href="css/hours.css?v=18">
 </head>
 <body>
 
@@ -64,23 +64,10 @@
 
   <main class="page">
 
-    <!-- ============ 1. EKRAN GŁÓWNY (3 KAFELKI NA WEJŚCIU) ============ -->
+    <!-- ============ 1. EKRAN GŁÓWNY (2 KAFELKI NA GÓRZE + KALENDARZ MIESIĘCZNY PONIŻEJ) ============ -->
     <section id="view-dashboard" class="view active">
       <div class="dashboard-container">
         <div class="dashboard-grid">
-          <!-- NAJWIĘKSZY KAFELEK: PLAN PRACY -->
-          <div class="dash-card dash-card-main" data-nav="plan">
-            <div class="dash-card-badge">Główny moduł</div>
-            <div class="dash-card-icon">📅</div>
-            <div class="dash-card-content">
-              <h3 class="dash-card-title">Plan pracy</h3>
-            </div>
-            <div class="dash-card-footer">
-              <span class="dash-stat" id="dashPlanStat">30 aktywnych dni</span>
-              <span class="dash-card-btn">Otwórz plan →</span>
-            </div>
-          </div>
-
           <!-- KAFELEK: DODAJ GODZINY -->
           <div class="dash-card" data-nav="hours">
             <div class="dash-card-icon icon-hours">⏱️</div>
@@ -104,6 +91,33 @@
               <span class="dash-card-btn">Otwórz przypomnienia →</span>
             </div>
           </div>
+        </div>
+
+        <!-- KALENDARZ MIESIĘCZNY (PONIEDZIAŁEK – NIEDZIELA) POD KAFELKAMI -->
+        <div class="dash-calendar-card" id="dashCalendarCard">
+          <div class="cal-toolbar">
+            <div class="cal-title-wrap">
+              <span class="cal-title-icon">📅</span>
+              <h3 id="calMonthTitle" class="cal-month-title">Miesiąc</h3>
+            </div>
+            <div class="cal-nav-btns">
+              <button type="button" class="btn cal-nav-btn" id="calPrevMonthBtn" title="Poprzedni miesiąc">← Poprzedni</button>
+              <button type="button" class="btn cal-today-btn" id="calTodayBtn" title="Wróć do bieżącego miesiąca">Dziś</button>
+              <button type="button" class="btn cal-nav-btn" id="calNextMonthBtn" title="Następny miesiąc">Następny →</button>
+            </div>
+          </div>
+
+          <div class="cal-weekdays">
+            <div class="cal-wday">Poniedziałek</div>
+            <div class="cal-wday">Wtorek</div>
+            <div class="cal-wday">Środa</div>
+            <div class="cal-wday">Czwartek</div>
+            <div class="cal-wday">Piątek</div>
+            <div class="cal-wday weekend">Sobota</div>
+            <div class="cal-wday weekend">Niedziela</div>
+          </div>
+
+          <div id="calGrid" class="cal-grid"></div>
         </div>
       </div>
     </section>
@@ -582,19 +596,20 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=17"></script>
-  <script src="js/core/utils.js?v=17"></script>
-  <script src="js/core/sample-data.js?v=17"></script>
-  <script src="js/core/storage.js?v=17"></script>
-  <script src="js/features/auth.js?v=17"></script>
-  <script src="js/features/plan.js?v=17"></script>
-  <script src="js/features/day-editor.js?v=17"></script>
-  <script src="js/features/items.js?v=17"></script>
-  <script src="js/features/people.js?v=17"></script>
-  <script src="js/features/hours.js?v=17"></script>
-  <script src="js/features/reminders.js?v=17"></script>
-  <script src="js/features/job-view.js?v=17"></script>
-  <script src="js/features/menu.js?v=17"></script>
-  <script src="js/main.js?v=17"></script>
+  <script src="js/core/firebase-config.js?v=18"></script>
+  <script src="js/core/utils.js?v=18"></script>
+  <script src="js/core/sample-data.js?v=18"></script>
+  <script src="js/core/storage.js?v=18"></script>
+  <script src="js/features/auth.js?v=18"></script>
+  <script src="js/features/plan.js?v=18"></script>
+  <script src="js/features/calendar.js?v=18"></script>
+  <script src="js/features/day-editor.js?v=18"></script>
+  <script src="js/features/items.js?v=18"></script>
+  <script src="js/features/people.js?v=18"></script>
+  <script src="js/features/hours.js?v=18"></script>
+  <script src="js/features/reminders.js?v=18"></script>
+  <script src="js/features/job-view.js?v=18"></script>
+  <script src="js/features/menu.js?v=18"></script>
+  <script src="js/main.js?v=18"></script>
 </body>
 </html>

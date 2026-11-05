@@ -13,11 +13,15 @@ const Store = {
   PROJECTS_KEY: 'muraven_projects_v1',
   projectsMeta: null,
 
+  CALENDAR_KEY: 'muraven_calendar_v1',
+  calendarNotes: null,
+
   col() { return firebase.firestore().collection('days'); },
 
   load() {
     this.loadReminders();
     this.loadProjects();
+    this.loadCalendar();
     if (CLOUD_ENABLED) { this.data = {}; return; } // dane przyjdą z chmury po zalogowaniu
     try {
       const raw = localStorage.getItem(this.KEY);
@@ -39,12 +43,15 @@ const Store = {
       const raw = {};
       let cloudReminders = null;
       let cloudProjects = null;
+      let cloudCalendar = null;
 
       snap.forEach(doc => {
         if (doc.id === '_reminders') {
           cloudReminders = doc.data();
         } else if (doc.id === '_projects') {
           cloudProjects = doc.data();
+        } else if (doc.id === '_calendar') {
+          cloudCalendar = doc.data();
         } else if (!doc.id.startsWith('_')) {
           raw[doc.id] = doc.data();
         }
@@ -73,6 +80,13 @@ const Store = {
         this.saveProjects();
       }
 
+      if (cloudCalendar && cloudCalendar.byDate && typeof cloudCalendar.byDate === 'object') {
+        this.calendarNotes = { byDate: cloudCalendar.byDate };
+        localStorage.setItem(this.CALENDAR_KEY, JSON.stringify(this.calendarNotes));
+      } else if (!cloudCalendar && this.calendarNotes && firebase.auth && firebase.auth().currentUser) {
+        this.saveCalendar();
+      }
+
       onChange();
     }, (err) => { console.error(err); toast('Brak połączenia z bazą danych'); });
   },
@@ -84,6 +98,7 @@ const Store = {
       this.data = {};
       this.reminders = null;
       this.projectsMeta = null;
+      this.calendarNotes = null;
     }
   },
 
@@ -403,6 +418,93 @@ const Store = {
     return true;
   },
 
+  /* ---------- Przypomnienia kalendarza miesięcznego ---------- */
+  loadCalendar() {
+    try {
+      const raw = localStorage.getItem(this.CALENDAR_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        this.calendarNotes = {
+          byDate: (parsed && typeof parsed.byDate === 'object' && parsed.byDate) ? parsed.byDate : {}
+        };
+        return this.calendarNotes;
+      }
+    } catch (e) { console.error('Błąd odczytu kalendarza', e); }
+    this.calendarNotes = { byDate: {} };
+    if (!CLOUD_ENABLED) {
+      this.saveCalendar();
+    }
+    return this.calendarNotes;
+  },
+
+  saveCalendar() {
+    if (!this.calendarNotes) return;
+    localStorage.setItem(this.CALENDAR_KEY, JSON.stringify(this.calendarNotes));
+    if (CLOUD_ENABLED && firebase.firestore && firebase.auth && firebase.auth().currentUser) {
+      this.col().doc('_calendar').set(JSON.parse(JSON.stringify(this.calendarNotes)))
+        .catch((err) => console.error('Błąd zapisu kalendarza w chmurze', err));
+    }
+  },
+
+  getCalendarDay(key) {
+    if (!this.calendarNotes) this.loadCalendar();
+    const list = this.calendarNotes.byDate[key];
+    return Array.isArray(list) ? list : [];
+  },
+
+  addCalendarReminder(key, text) {
+    const trimmed = String(text || '').trim();
+    if (!key || !trimmed) return null;
+    if (!this.calendarNotes) this.loadCalendar();
+    if (!Array.isArray(this.calendarNotes.byDate[key])) {
+      this.calendarNotes.byDate[key] = [];
+    }
+    const item = {
+      id: 'cal-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      text: trimmed,
+      done: false
+    };
+    this.calendarNotes.byDate[key].push(item);
+    this.saveCalendar();
+    return item;
+  },
+
+  toggleCalendarReminder(key, id) {
+    if (!this.calendarNotes) this.loadCalendar();
+    const list = this.calendarNotes.byDate[key];
+    if (!Array.isArray(list)) return false;
+    const item = list.find(i => i.id === id);
+    if (!item) return false;
+    item.done = !item.done;
+    this.saveCalendar();
+    return true;
+  },
+
+  updateCalendarReminder(key, id, newText) {
+    const trimmed = String(newText || '').trim();
+    if (!trimmed) return false;
+    if (!this.calendarNotes) this.loadCalendar();
+    const list = this.calendarNotes.byDate[key];
+    if (!Array.isArray(list)) return false;
+    const item = list.find(i => i.id === id);
+    if (!item) return false;
+    item.text = trimmed;
+    this.saveCalendar();
+    return true;
+  },
+
+  deleteCalendarReminder(key, id) {
+    if (!this.calendarNotes) this.loadCalendar();
+    const list = this.calendarNotes.byDate[key];
+    if (!Array.isArray(list)) return false;
+    this.calendarNotes.byDate[key] = list.filter(i => i.id !== id);
+    if (this.calendarNotes.byDate[key].length === 0) {
+      delete this.calendarNotes.byDate[key];
+    }
+    this.saveCalendar();
+    return true;
+  },
+
   addHoursEntry({ date, name, from, to, project, note }) {
     if (!date || !name || !from || !to) return false;
     const day = this.get(date);
@@ -441,7 +543,8 @@ const Store = {
     return JSON.stringify({
       days: this.data,
       reminders: this.reminders || this.loadReminders(),
-      projectsMeta: this.projectsMeta || this.loadProjects()
+      projectsMeta: this.projectsMeta || this.loadProjects(),
+      calendarNotes: this.calendarNotes || this.loadCalendar()
     }, null, 2);
   },
 
@@ -460,6 +563,10 @@ const Store = {
           deleted: Array.isArray(parsed.projectsMeta.deleted) ? parsed.projectsMeta.deleted : []
         };
         this.saveProjects();
+      }
+      if (parsed.calendarNotes && typeof parsed.calendarNotes.byDate === 'object') {
+        this.calendarNotes = { byDate: parsed.calendarNotes.byDate };
+        this.saveCalendar();
       }
     } else {
       this.replaceAll(this.normalize(parsed));

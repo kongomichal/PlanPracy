@@ -67,6 +67,7 @@ const App = {
 
   render() {
     Plan.render();
+    Calendar.render();
     Items.render();
     People.render();
     Hours.render();
@@ -81,6 +82,7 @@ const App = {
     Store.load();
     Auth.init();
     Plan.init();
+    Calendar.init();
     DayEditor.init();
     Menu.init();
     JobView.init();

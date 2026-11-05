@@ -1,4 +1,4 @@
-/* Kalendarz miesięczny (Poniedziałek – Niedziela) na ekranie głównym:
+/* Kalendarz miesięczny na ekranie głównym:
    - Przypomnienia po odklikaniu zostają na miejscu z zielonym ptaszkiem (✓) bez przekreślenia.
    - Odklikane (wykonane) dni całkowicie znikają z kalendarza i trafiają do Archiwum poniżej. */
 const Calendar = {
@@ -46,31 +46,28 @@ const Calendar = {
     this.render();
   },
 
-  /** Generuje dni siatki miesiąca od poniedziałku pierwszego tygodnia do niedzieli ostatniego tygodnia. */
-  buildGridDays() {
+  /** Generuje dni wybranego miesiąca (od 1 do ostatniego dnia miesiąca). */
+  buildMonthDays() {
     const firstOfMonth = new Date(this.year, this.month, 1);
     const lastOfMonth = new Date(this.year, this.month + 1, 0);
 
-    const startMonday = mondayOf(firstOfMonth);
-    const lastDayShift = (lastOfMonth.getDay() + 6) % 7; // 0 = Pn ... 6 = Nd
-    const endSunday = addDays(lastOfMonth, 6 - lastDayShift);
-
     const todayStr = dateKey(new Date());
     const days = [];
-    let cur = new Date(startMonday);
+    let cur = new Date(firstOfMonth);
 
-    while (cur <= endSunday) {
+    while (cur <= lastOfMonth) {
       const k = dateKey(cur);
       const dayOfWeek = (cur.getDay() + 6) % 7; // 0 = Pn ... 6 = Nd
       days.push({
         key: k,
         dayNum: cur.getDate(),
         monthNum: cur.getMonth(),
-        inMonth: cur.getMonth() === this.month && cur.getFullYear() === this.year,
+        inMonth: true,
         isToday: k === todayStr,
         isPast: k < todayStr,
         isWeekend: dayOfWeek >= 5,
         dayOfWeek,
+        weekdayFull: this.WEEKDAYS_FULL[dayOfWeek],
         weekdayShort: this.WEEKDAYS_SHORT[dayOfWeek]
       });
       cur = addDays(cur, 1);
@@ -78,9 +75,9 @@ const Calendar = {
     return days;
   },
 
-  /** Zwraca widoczne w siatce minione dni, które nie zostały jeszcze odklikane. */
+  /** Zwraca minione dni w wybranym miesiącu, które nie zostały jeszcze odklikane. */
   getUncompletedPastDaysInView() {
-    return this.buildGridDays()
+    return this.buildMonthDays()
       .filter(d => d.isPast && !Store.isCalendarDayDone(d.key))
       .map(d => d.key);
   },
@@ -91,7 +88,7 @@ const Calendar = {
     this.render();
 
     const d = parseKey(key);
-    toast(`Przeniesiono dzień ${DAYS_SHORT[d.getDay()]} ${shortDate(d)} do archiwum`, 'Cofnij', () => {
+    toast(`Odkliknięto dzień ${DAYS_SHORT[d.getDay()]} ${shortDate(d)} (przeniesiono do archiwum)`, 'Cofnij', () => {
       Store.setCalendarDayDone(key, false);
       this.render();
     });
@@ -100,7 +97,7 @@ const Calendar = {
   completePastDaysInMonth() {
     const pastKeys = this.getUncompletedPastDaysInView();
     if (!pastKeys.length) {
-      return toast('Brak minionych dni do odkliknięcia w tym widoku');
+      return toast('Brak minionych dni do odkliknięcia w tym miesiącu');
     }
     pastKeys.forEach(k => Store.setCalendarDayDone(k, true));
     this.addingDateKey = null;
@@ -185,15 +182,14 @@ const Calendar = {
     const gridEl = $('calGrid');
     if (!gridEl) return;
 
-    // Pobierz dni siatki i odfiltruj odklikane (wykonane) dni — mają całkowicie znikać z kalendarza
-    const allDays = this.buildGridDays();
+    // Pobierz dni wybranego miesiąca i odfiltruj odklikane (wykonane) dni — znikają z kalendarza
+    const allDays = this.buildMonthDays();
     const activeDays = allDays.filter(d => !Store.isCalendarDayDone(d.key));
 
-    // Sprawdź, czy każdy widoczny dzień leży w swojej kolumnie Pn–Nd (np. gdy odklikano pełne tygodnie lub nic nie odklikano)
-    const columnsAligned = activeDays.every((d, idx) => (idx % 7) === d.dayOfWeek);
+    // Ukryj sztywny pasek nagłówków kolumn, ponieważ każdy kafelek ma własną etykietę dnia tygodnia, a po odklikaniu dni przesuwają się płynnie w górę
     const weekdaysBar = document.querySelector('.cal-weekdays');
     if (weekdaysBar) {
-      weekdaysBar.style.display = columnsAligned ? '' : 'none';
+      weekdaysBar.style.display = 'none';
     }
 
     if (activeDays.length === 0) {
@@ -245,14 +241,12 @@ const Calendar = {
         </form>
       ` : '';
 
-      const monthSuffix = !d.inMonth ? `.${String(d.monthNum + 1).padStart(2, '0')}` : '';
-
       return `
-        <div class="cal-day ${d.inMonth ? '' : 'outside'} ${d.isToday ? 'today' : ''} ${d.isWeekend ? 'weekend' : ''}" data-cal-day="${d.key}">
+        <div class="cal-day ${d.isToday ? 'today' : ''} ${d.isWeekend ? 'weekend' : ''}" data-cal-day="${d.key}">
           <div class="cal-day-head">
             <span class="cal-day-num">
-              <span class="cal-day-wday-badge ${columnsAligned ? 'aligned' : 'always'}">${d.weekdayShort}</span>
-              ${d.dayNum}${monthSuffix}
+              <span class="cal-day-wday-badge ${d.isWeekend ? 'weekend' : ''}">${d.weekdayShort}</span>
+              <strong>${d.dayNum}.${String(d.monthNum + 1).padStart(2, '0')}</strong>
               ${d.isToday ? '<span class="cal-today-pill">Dziś</span>' : ''}
             </span>
             <div class="cal-day-head-btns">

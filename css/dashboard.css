@@ -1,8 +1,8 @@
 /* Ekran główny – 2 kafelki na górze + kalendarz miesięczny poniżej */
 .dashboard-container {
-  max-width: 1220px;
+  max-width: 1400px;
   margin: 12px auto 36px;
-  padding: 0 16px;
+  padding: 0 12px;
 }
 
 .dashboard-header {
@@ -337,11 +337,9 @@
 }
 
 .cal-rem-item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 4px;
-  padding: 5px 6px;
+  position: relative;
+  display: block;
+  padding: 6px 8px;
   border-radius: 7px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -360,8 +358,7 @@
 }
 
 .cal-rem-toggle {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
   border: none;
   background: transparent;
   padding: 0;
@@ -370,25 +367,26 @@
   cursor: pointer;
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: 7px;
   color: #0f172a;
   font: inherit;
 }
 
 .cal-rem-box {
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
   border-radius: 5px;
   border: 1.5px solid #94a3b8;
   background: #ffffff;
   color: #ffffff;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 900;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-top: 1px;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 
@@ -399,26 +397,36 @@
 }
 
 .cal-rem-text {
-  font-size: 12.5px;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.38;
   color: #0f172a !important;
   text-decoration: none !important;
   opacity: 1 !important;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .cal-rem-actions {
-  display: flex;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: none;
   align-items: center;
   gap: 2px;
-  opacity: 0;
-  transition: opacity 0.12s ease;
-  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  padding: 1px 2px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  z-index: 2;
 }
 
 .cal-rem-item:hover .cal-rem-actions {
-  opacity: 1;
+  display: flex;
 }
 
 .cal-rem-act {
@@ -521,8 +529,23 @@
   .cal-day-wday-mobile {
     display: inline;
   }
+  .cal-rem-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .cal-rem-toggle {
+    flex: 1;
+    width: auto;
+  }
   .cal-rem-actions {
-    opacity: 1;
+    position: static;
+    display: flex;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
   }
 }
 

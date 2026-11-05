@@ -1,4 +1,6 @@
-/* Kalendarz miesięczny (Poniedziałek – Niedziela) na ekranie głównym z przypomnieniami, ptaszkiem (✓) oraz archiwizacją wykonanych dni */
+/* Kalendarz miesięczny (Poniedziałek – Niedziela) na ekranie głównym:
+   - Przypomnienia po odklikaniu zostają na miejscu z zielonym ptaszkiem (✓) bez przekreślenia.
+   - Odklikane (wykonane) dni całkowicie znikają z kalendarza i trafiają do Archiwum poniżej. */
 const Calendar = {
   MONTH_NAMES: [
     'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
@@ -68,6 +70,7 @@ const Calendar = {
         isToday: k === todayStr,
         isPast: k < todayStr,
         isWeekend: dayOfWeek >= 5,
+        dayOfWeek,
         weekdayShort: this.WEEKDAYS_SHORT[dayOfWeek]
       });
       cur = addDays(cur, 1);
@@ -75,40 +78,34 @@ const Calendar = {
     return days;
   },
 
-  /** Zwraca minione dni w bieżącym miesiącu, które nie są jeszcze odklikane jako wykonane. */
-  getUncompletedPastDaysInMonth() {
+  /** Zwraca widoczne w siatce minione dni, które nie zostały jeszcze odklikane. */
+  getUncompletedPastDaysInView() {
     return this.buildGridDays()
-      .filter(d => d.inMonth && d.isPast && !Store.isCalendarDayDone(d.key))
+      .filter(d => d.isPast && !Store.isCalendarDayDone(d.key))
       .map(d => d.key);
   },
 
-  toggleDayDone(key) {
-    const isDone = Store.isCalendarDayDone(key);
-    const nextState = !isDone;
-    Store.setCalendarDayDone(key, nextState);
+  dismissDay(key) {
+    Store.setCalendarDayDone(key, true);
     if (this.addingDateKey === key) this.addingDateKey = null;
     this.render();
 
     const d = parseKey(key);
-    if (nextState) {
-      toast(`Odkliknięto i zarchiwizowano dzień ${DAYS_SHORT[d.getDay()]} ${shortDate(d)}`, 'Cofnij', () => {
-        Store.setCalendarDayDone(key, false);
-        this.render();
-      });
-    } else {
-      toast(`Przywrócono dzień ${DAYS_SHORT[d.getDay()]} ${shortDate(d)} z archiwum`);
-    }
+    toast(`Przeniesiono dzień ${DAYS_SHORT[d.getDay()]} ${shortDate(d)} do archiwum`, 'Cofnij', () => {
+      Store.setCalendarDayDone(key, false);
+      this.render();
+    });
   },
 
   completePastDaysInMonth() {
-    const pastKeys = this.getUncompletedPastDaysInMonth();
+    const pastKeys = this.getUncompletedPastDaysInView();
     if (!pastKeys.length) {
-      return toast('Brak minionych dni do odkliknięcia w tym miesiącu');
+      return toast('Brak minionych dni do odkliknięcia w tym widoku');
     }
     pastKeys.forEach(k => Store.setCalendarDayDone(k, true));
     this.addingDateKey = null;
     this.render();
-    toast(`Odkliknięto i zarchiwizowano minione dni (${pastKeys.length})`, 'Cofnij', () => {
+    toast(`Przeniesiono minione dni (${pastKeys.length}) do archiwum`, 'Cofnij', () => {
       pastKeys.forEach(k => Store.setCalendarDayDone(k, false));
       this.render();
     });
@@ -133,7 +130,7 @@ const Calendar = {
     if (!this.archiveOpen) return;
 
     if (archivedKeys.length === 0) {
-      boxEl.innerHTML = `<div class="cal-archive-empty">Brak odklikanych dni w archiwum. Kliknij przycisk <b>✓</b> przy wybranym dniu w kalendarzu, aby oznaczyć go jako wykonany i przenieść do archiwum.</div>`;
+      boxEl.innerHTML = `<div class="cal-archive-empty">Brak odklikanych dni w archiwum. Gdy klikniesz <b>✓</b> przy wybranym dniu w kalendarzu, dzień zniknie z kalendarza i pojawi się tutaj.</div>`;
       return;
     }
 
@@ -159,12 +156,12 @@ const Calendar = {
         <div class="cal-arch-card" data-arch-day="${key}">
           <div class="cal-arch-head">
             <div class="cal-arch-date">
-              <span class="cal-done-badge">✓ Wykonany</span>
+              <span class="cal-done-badge">✓ Wykonany dzień</span>
               <strong>${esc(dateLabel)}</strong>
             </div>
             <div class="cal-arch-btns">
-              <button type="button" class="btn small" data-cal-restore-day="${key}" title="Przywróć ten dzień z powrotem na kalendarz">↩ Przywróć</button>
-              <button type="button" class="btn small danger" data-cal-purge-day="${key}" title="Usuń ten dzień z archiwum">🗑️</button>
+              <button type="button" class="btn small" data-cal-restore-day="${key}" title="Przywróć ten dzień z powrotem do kalendarza">↩ Przywróć</button>
+              <button type="button" class="btn small danger" data-cal-purge-day="${key}" title="Usuń trwale ten dzień z archiwum">🗑️</button>
             </div>
           </div>
           ${remHtml}
@@ -179,7 +176,7 @@ const Calendar = {
     }
 
     // Przycisk "Odkliknij minione dni" w pasku kalendarza
-    const pastUncompleted = this.getUncompletedPastDaysInMonth();
+    const pastUncompleted = this.getUncompletedPastDaysInView();
     const pastBtn = $('calCompletePastBtn');
     const pastCountEl = $('calPastDaysCount');
     if (pastCountEl) pastCountEl.textContent = pastUncompleted.length;
@@ -188,49 +185,55 @@ const Calendar = {
     const gridEl = $('calGrid');
     if (!gridEl) return;
 
-    const days = this.buildGridDays();
+    // Pobierz dni siatki i odfiltruj odklikane (wykonane) dni — mają całkowicie znikać z kalendarza
+    const allDays = this.buildGridDays();
+    const activeDays = allDays.filter(d => !Store.isCalendarDayDone(d.key));
 
-    gridEl.innerHTML = days.map(d => {
+    // Sprawdź, czy każdy widoczny dzień leży w swojej kolumnie Pn–Nd (np. gdy odklikano pełne tygodnie lub nic nie odklikano)
+    const columnsAligned = activeDays.every((d, idx) => (idx % 7) === d.dayOfWeek);
+    const weekdaysBar = document.querySelector('.cal-weekdays');
+    if (weekdaysBar) {
+      weekdaysBar.style.display = columnsAligned ? '' : 'none';
+    }
+
+    if (activeDays.length === 0) {
+      gridEl.innerHTML = `
+        <div class="cal-empty-month">
+          Wszystkie dni z tego miesiąca zostały odklikane i przeniesione do <b>Archiwum wykonanych dni</b> poniżej.
+        </div>`;
+      this.renderArchive();
+      return;
+    }
+
+    gridEl.innerHTML = activeDays.map(d => {
       const reminders = Store.getCalendarDay(d.key);
-      const isDone = Store.isCalendarDayDone(d.key);
       const isAdding = this.addingDateKey === d.key;
 
-      let contentHtml = '';
-      if (isDone) {
-        contentHtml = `
-          <div class="cal-day-archived-info" data-cal-open-archive="${d.key}" title="Kliknij, aby zobaczyć w archiwum poniżej">
-            <span class="cal-done-pill">✓ Wykonany</span>
-            ${reminders.length ? `<span class="cal-arch-count-pill">🗄️ W archiwum: ${reminders.length}</span>` : ''}
-          </div>`;
-      } else {
-        const itemsHtml = reminders.map(item => {
-          const isEditing = this.editingItem && this.editingItem.key === d.key && this.editingItem.id === item.id;
-          if (isEditing) {
-            return `
-              <div class="cal-rem-edit-box" data-cal-edit-row="${esc(item.id)}" data-cal-date="${d.key}">
-                <input type="text" class="cal-rem-edit-input" value="${esc(item.text)}" data-cal-edit-input="${esc(item.id)}" data-cal-date="${d.key}" autocomplete="off">
-                <div class="cal-add-actions">
-                  <button type="button" class="cal-mini-btn save" data-cal-save-edit="${esc(item.id)}" data-cal-date="${d.key}" title="Zapisz">✓ Zapisz</button>
-                  <button type="button" class="cal-mini-btn cancel" data-cal-cancel-edit title="Anuluj">✕</button>
-                </div>
-              </div>`;
-          }
-
+      const itemsHtml = reminders.map(item => {
+        const isEditing = this.editingItem && this.editingItem.key === d.key && this.editingItem.id === item.id;
+        if (isEditing) {
           return `
-            <div class="cal-rem-item ${item.done ? 'is-checked' : ''}" data-cal-item="${esc(item.id)}" data-cal-date="${d.key}">
-              <button type="button" class="cal-rem-toggle" data-cal-toggle="${esc(item.id)}" data-cal-date="${d.key}" title="${item.done ? 'Cofnij odklikanie' : 'Odkliknij przypomnienie'}">
-                <span class="cal-rem-box" aria-hidden="true">${item.done ? '✓' : ''}</span>
-                <span class="cal-rem-text">${esc(item.text)}</span>
-              </button>
-              <div class="cal-rem-actions">
-                <button type="button" class="cal-rem-act edit" data-cal-start-edit="${esc(item.id)}" data-cal-date="${d.key}" title="Edytuj treść">✏️</button>
-                <button type="button" class="cal-rem-act del" data-cal-del="${esc(item.id)}" data-cal-date="${d.key}" title="Usuń przypomnienie">✕</button>
+            <div class="cal-rem-edit-box" data-cal-edit-row="${esc(item.id)}" data-cal-date="${d.key}">
+              <input type="text" class="cal-rem-edit-input" value="${esc(item.text)}" data-cal-edit-input="${esc(item.id)}" data-cal-date="${d.key}" autocomplete="off">
+              <div class="cal-add-actions">
+                <button type="button" class="cal-mini-btn save" data-cal-save-edit="${esc(item.id)}" data-cal-date="${d.key}" title="Zapisz">✓ Zapisz</button>
+                <button type="button" class="cal-mini-btn cancel" data-cal-cancel-edit title="Anuluj">✕</button>
               </div>
             </div>`;
-        }).join('');
+        }
 
-        contentHtml = `<div class="cal-rem-list">${itemsHtml}</div>`;
-      }
+        return `
+          <div class="cal-rem-item ${item.done ? 'is-checked' : ''}" data-cal-item="${esc(item.id)}" data-cal-date="${d.key}">
+            <button type="button" class="cal-rem-toggle" data-cal-toggle="${esc(item.id)}" data-cal-date="${d.key}" title="${item.done ? 'Cofnij odklikanie przypomnienia' : 'Odkliknij przypomnienie (pojawi się ptaszek)'}">
+              <span class="cal-rem-box" aria-hidden="true">${item.done ? '✓' : ''}</span>
+              <span class="cal-rem-text">${esc(item.text)}</span>
+            </button>
+            <div class="cal-rem-actions">
+              <button type="button" class="cal-rem-act edit" data-cal-start-edit="${esc(item.id)}" data-cal-date="${d.key}" title="Edytuj treść">✏️</button>
+              <button type="button" class="cal-rem-act del" data-cal-del="${esc(item.id)}" data-cal-date="${d.key}" title="Usuń przypomnienie">✕</button>
+            </div>
+          </div>`;
+      }).join('');
 
       const addBoxHtml = isAdding ? `
         <form class="cal-add-form" data-cal-form="${d.key}">
@@ -245,21 +248,19 @@ const Calendar = {
       const monthSuffix = !d.inMonth ? `.${String(d.monthNum + 1).padStart(2, '0')}` : '';
 
       return `
-        <div class="cal-day ${d.inMonth ? '' : 'outside'} ${d.isToday ? 'today' : ''} ${d.isWeekend ? 'weekend' : ''} ${isDone ? 'day-done' : ''}" data-cal-day="${d.key}">
+        <div class="cal-day ${d.inMonth ? '' : 'outside'} ${d.isToday ? 'today' : ''} ${d.isWeekend ? 'weekend' : ''}" data-cal-day="${d.key}">
           <div class="cal-day-head">
             <span class="cal-day-num">
-              <span class="cal-day-wday-mobile">${d.weekdayShort}</span>
+              <span class="cal-day-wday-badge ${columnsAligned ? 'aligned' : 'always'}">${d.weekdayShort}</span>
               ${d.dayNum}${monthSuffix}
               ${d.isToday ? '<span class="cal-today-pill">Dziś</span>' : ''}
             </span>
             <div class="cal-day-head-btns">
-              <button type="button" class="cal-day-done-btn ${isDone ? 'active' : ''}" data-cal-done-day="${d.key}" title="${isDone ? 'Przywróć dzień z archiwum' : 'Odkliknij wykonany dzień i przenieś do archiwum'}">
-                ${isDone ? '↩' : '✓'}
-              </button>
-              ${!isDone ? `<button type="button" class="cal-day-add-btn" data-cal-open-add="${d.key}" title="Dodaj przypomnienie w tym dniu">＋</button>` : ''}
+              <button type="button" class="cal-day-done-btn" data-cal-done-day="${d.key}" title="Odkliknij wykonany dzień (zniknie z kalendarza i trafi do archiwum)">✓</button>
+              <button type="button" class="cal-day-add-btn" data-cal-open-add="${d.key}" title="Dodaj przypomnienie w tym dniu">＋</button>
             </div>
           </div>
-          ${contentHtml}
+          <div class="cal-rem-list">${itemsHtml}</div>
           ${addBoxHtml}
         </div>`;
     }).join('');
@@ -343,16 +344,7 @@ const Calendar = {
       const doneDayBtn = e.target.closest('[data-cal-done-day]');
       if (doneDayBtn) {
         e.stopPropagation();
-        this.toggleDayDone(doneDayBtn.dataset.calDoneDay);
-        return;
-      }
-
-      const openArchiveInfo = e.target.closest('[data-cal-open-archive]');
-      if (openArchiveInfo) {
-        e.stopPropagation();
-        this.archiveOpen = true;
-        this.renderArchive();
-        $('calArchiveSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        this.dismissDay(doneDayBtn.dataset.calDoneDay);
         return;
       }
 
@@ -428,9 +420,9 @@ const Calendar = {
         return;
       }
 
-      // Kliknięcie w pustą przestrzeń aktywnego (nieodklikanego) kafelka dnia otwiera wpisywanie przypomnienia
+      // Kliknięcie w pustą przestrzeń kafelka dnia otwiera wpisywanie przypomnienia
       const dayCell = e.target.closest('[data-cal-day]');
-      if (dayCell && !dayCell.classList.contains('day-done') && !e.target.closest('.cal-add-form') && !e.target.closest('.cal-rem-edit-box') && !e.target.closest('.cal-rem-item')) {
+      if (dayCell && !e.target.closest('.cal-add-form') && !e.target.closest('.cal-rem-edit-box') && !e.target.closest('.cal-rem-item')) {
         const key = dayCell.dataset.calDay;
         if (this.addingDateKey !== key) {
           this.editingItem = null;

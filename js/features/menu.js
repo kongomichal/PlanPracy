@@ -9,13 +9,16 @@ const Menu = {
     if (restoreBtn) {
       restoreBtn.addEventListener('click', () => {
         const dismissedCount = Object.values(Store.data).filter(d => d.dismissed).length;
-        if (!dismissedCount) return toast('Brak odklikniętych dni do przywrócenia');
-        if (!confirm(`Przywrócić wszystkie odkliknięte dni (${dismissedCount}) na plan?`)) return;
+        const calArchivedCount = Store.getArchivedCalendarDays().length;
+        const total = dismissedCount + calArchivedCount;
+        if (!total) return toast('Brak odklikniętych dni do przywrócenia');
+        if (!confirm(`Przywrócić wszystkie odkliknięte dni (${total}) z archiwum?`)) return;
         Object.values(Store.data).forEach(d => { if (d.dismissed) d.dismissed = false; });
         Store.save();
+        Store.restoreAllCalendarDays();
         App.render();
         closeModal('menuModal');
-        toast(`Przywrócono ${dismissedCount} ${plural(dismissedCount, 'dzień', 'dni', 'dni')}`);
+        toast(`Przywrócono ${total} ${plural(total, 'dzień', 'dni', 'dni')}`);
       });
     }
 

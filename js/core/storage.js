@@ -80,8 +80,11 @@ const Store = {
         this.saveProjects();
       }
 
-      if (cloudCalendar && cloudCalendar.byDate && typeof cloudCalendar.byDate === 'object') {
-        this.calendarNotes = { byDate: cloudCalendar.byDate };
+      if (cloudCalendar && typeof cloudCalendar === 'object') {
+        this.calendarNotes = {
+          byDate: (cloudCalendar.byDate && typeof cloudCalendar.byDate === 'object') ? cloudCalendar.byDate : {},
+          doneDays: (cloudCalendar.doneDays && typeof cloudCalendar.doneDays === 'object') ? cloudCalendar.doneDays : {}
+        };
         localStorage.setItem(this.CALENDAR_KEY, JSON.stringify(this.calendarNotes));
       } else if (!cloudCalendar && this.calendarNotes && firebase.auth && firebase.auth().currentUser) {
         this.saveCalendar();
@@ -425,12 +428,13 @@ const Store = {
       if (raw) {
         const parsed = JSON.parse(raw);
         this.calendarNotes = {
-          byDate: (parsed && typeof parsed.byDate === 'object' && parsed.byDate) ? parsed.byDate : {}
+          byDate: (parsed && typeof parsed.byDate === 'object' && parsed.byDate) ? parsed.byDate : {},
+          doneDays: (parsed && typeof parsed.doneDays === 'object' && parsed.doneDays) ? parsed.doneDays : {}
         };
         return this.calendarNotes;
       }
     } catch (e) { console.error('Błąd odczytu kalendarza', e); }
-    this.calendarNotes = { byDate: {} };
+    this.calendarNotes = { byDate: {}, doneDays: {} };
     if (!CLOUD_ENABLED) {
       this.saveCalendar();
     }
@@ -444,6 +448,41 @@ const Store = {
       this.col().doc('_calendar').set(JSON.parse(JSON.stringify(this.calendarNotes)))
         .catch((err) => console.error('Błąd zapisu kalendarza w chmurze', err));
     }
+  },
+
+  isCalendarDayDone(key) {
+    if (!this.calendarNotes) this.loadCalendar();
+    return !!(this.calendarNotes.doneDays && this.calendarNotes.doneDays[key]);
+  },
+
+  setCalendarDayDone(key, done) {
+    if (!key) return false;
+    if (!this.calendarNotes) this.loadCalendar();
+    if (!this.calendarNotes.doneDays) this.calendarNotes.doneDays = {};
+    if (done) {
+      this.calendarNotes.doneDays[key] = true;
+    } else {
+      delete this.calendarNotes.doneDays[key];
+    }
+    this.saveCalendar();
+    return true;
+  },
+
+  getArchivedCalendarDays() {
+    if (!this.calendarNotes) this.loadCalendar();
+    const doneDays = this.calendarNotes.doneDays || {};
+    return Object.keys(doneDays)
+      .filter(k => doneDays[k])
+      .sort()
+      .reverse();
+  },
+
+  restoreAllCalendarDays() {
+    if (!this.calendarNotes) this.loadCalendar();
+    const count = Object.keys(this.calendarNotes.doneDays || {}).length;
+    this.calendarNotes.doneDays = {};
+    this.saveCalendar();
+    return count;
   },
 
   getCalendarDay(key) {
@@ -564,8 +603,11 @@ const Store = {
         };
         this.saveProjects();
       }
-      if (parsed.calendarNotes && typeof parsed.calendarNotes.byDate === 'object') {
-        this.calendarNotes = { byDate: parsed.calendarNotes.byDate };
+      if (parsed.calendarNotes && typeof parsed.calendarNotes === 'object') {
+        this.calendarNotes = {
+          byDate: (parsed.calendarNotes.byDate && typeof parsed.calendarNotes.byDate === 'object') ? parsed.calendarNotes.byDate : {},
+          doneDays: (parsed.calendarNotes.doneDays && typeof parsed.calendarNotes.doneDays === 'object') ? parsed.calendarNotes.doneDays : {}
+        };
         this.saveCalendar();
       }
     } else {

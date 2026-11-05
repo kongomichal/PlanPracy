@@ -11,14 +11,14 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Muraven – prosty plan pracy, rejestracja godzin i przypomnienia.">
   <title>Muraven – Plan pracy</title>
-  <link rel="stylesheet" href="css/base.css?v=19">
-  <link rel="stylesheet" href="css/layout.css?v=19">
-  <link rel="stylesheet" href="css/components.css?v=19">
-  <link rel="stylesheet" href="css/modals.css?v=19">
-  <link rel="stylesheet" href="css/jobs.css?v=19">
-  <link rel="stylesheet" href="css/dashboard.css?v=19">
-  <link rel="stylesheet" href="css/reminders.css?v=19">
-  <link rel="stylesheet" href="css/hours.css?v=19">
+  <link rel="stylesheet" href="css/base.css?v=20">
+  <link rel="stylesheet" href="css/layout.css?v=20">
+  <link rel="stylesheet" href="css/components.css?v=20">
+  <link rel="stylesheet" href="css/modals.css?v=20">
+  <link rel="stylesheet" href="css/jobs.css?v=20">
+  <link rel="stylesheet" href="css/dashboard.css?v=20">
+  <link rel="stylesheet" href="css/reminders.css?v=20">
+  <link rel="stylesheet" href="css/hours.css?v=20">
 </head>
 <body>
 
@@ -99,6 +99,9 @@
             <div class="cal-title-wrap">
               <span class="cal-title-icon">📅</span>
               <h3 id="calMonthTitle" class="cal-month-title">Miesiąc</h3>
+              <button type="button" class="btn small success-btn cal-complete-past-btn" id="calCompletePastBtn" title="Odkliknij wszystkie minione dni w tym miesiącu i przenieś je do archiwum" hidden>
+                ✓ Odkliknij minione dni (<span id="calPastDaysCount">0</span>)
+              </button>
             </div>
             <div class="cal-nav-btns">
               <button type="button" class="btn cal-nav-btn" id="calPrevMonthBtn" title="Poprzedni miesiąc">← Poprzedni</button>
@@ -118,6 +121,21 @@
           </div>
 
           <div id="calGrid" class="cal-grid"></div>
+        </div>
+
+        <!-- ARCHIWUM WYKONANYCH (ODKLIKANYCH) DNI -->
+        <div class="cal-archive-section" id="calArchiveSection">
+          <div class="cal-archive-top">
+            <div class="cal-archive-title-wrap">
+              <span>🗄️</span>
+              <h4>Archiwum wykonanych dni (<span id="calArchiveCount">0</span>)</h4>
+            </div>
+            <div class="cal-archive-actions">
+              <button type="button" class="btn small" id="calRestoreAllBtn" hidden>↩ Przywróć wszystkie</button>
+              <button type="button" class="btn small" id="calToggleArchiveBtn">Pokaż archiwum</button>
+            </div>
+          </div>
+          <div id="calArchiveBox" class="cal-archive-box" hidden></div>
         </div>
       </div>
     </section>
@@ -596,20 +614,20 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=19"></script>
-  <script src="js/core/utils.js?v=19"></script>
-  <script src="js/core/sample-data.js?v=19"></script>
-  <script src="js/core/storage.js?v=19"></script>
-  <script src="js/features/auth.js?v=19"></script>
-  <script src="js/features/plan.js?v=19"></script>
-  <script src="js/features/calendar.js?v=19"></script>
-  <script src="js/features/day-editor.js?v=19"></script>
-  <script src="js/features/items.js?v=19"></script>
-  <script src="js/features/people.js?v=19"></script>
-  <script src="js/features/hours.js?v=19"></script>
-  <script src="js/features/reminders.js?v=19"></script>
-  <script src="js/features/job-view.js?v=19"></script>
-  <script src="js/features/menu.js?v=19"></script>
-  <script src="js/main.js?v=19"></script>
+  <script src="js/core/firebase-config.js?v=20"></script>
+  <script src="js/core/utils.js?v=20"></script>
+  <script src="js/core/sample-data.js?v=20"></script>
+  <script src="js/core/storage.js?v=20"></script>
+  <script src="js/features/auth.js?v=20"></script>
+  <script src="js/features/plan.js?v=20"></script>
+  <script src="js/features/calendar.js?v=20"></script>
+  <script src="js/features/day-editor.js?v=20"></script>
+  <script src="js/features/items.js?v=20"></script>
+  <script src="js/features/people.js?v=20"></script>
+  <script src="js/features/hours.js?v=20"></script>
+  <script src="js/features/reminders.js?v=20"></script>
+  <script src="js/features/job-view.js?v=20"></script>
+  <script src="js/features/menu.js?v=20"></script>
+  <script src="js/main.js?v=20"></script>
 </body>
 </html>

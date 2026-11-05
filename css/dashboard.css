@@ -272,11 +272,89 @@
   box-shadow: inset 0 0 0 2px #2563eb;
 }
 
+.cal-day.day-done {
+  background: #f8fafc;
+}
+
+.cal-day.day-done .cal-day-num {
+  color: #64748b;
+}
+
 .cal-day-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 4px;
+}
+
+.cal-day-head-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cal-day-done-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #16a34a;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.cal-day-done-btn:hover {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+}
+
+.cal-day-done-btn.active {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.cal-day-done-btn.active:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.cal-day-archived-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: #f0fdf4;
+  border: 1px dashed #86efac;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cal-day-archived-info:hover {
+  background: #dcfce7;
+}
+
+.cal-done-pill {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #15803d;
+}
+
+.cal-arch-count-pill {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
 }
 
 .cal-day-num {
@@ -517,6 +595,121 @@
 
 .cal-mini-btn.cancel:hover {
   background: #cbd5e1;
+}
+
+/* ============ SEKCJA ARCHIWUM WYKONANYCH DNI ============ */
+.cal-archive-section {
+  margin-top: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 18px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.cal-archive-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cal-archive-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal-archive-title-wrap h4 {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #334155;
+}
+
+.cal-archive-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal-archive-box {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 12px;
+}
+
+.cal-archive-box[hidden] {
+  display: none !important;
+}
+
+.cal-archive-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 16px;
+  color: #64748b;
+  font-size: 13.5px;
+}
+
+.cal-arch-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cal-arch-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.cal-arch-date {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13.5px;
+  color: #0f172a;
+}
+
+.cal-done-badge {
+  display: inline-block;
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 800;
+  color: #15803d;
+  background: #dcfce7;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.cal-arch-btns {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.cal-arch-rem-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cal-arch-no-rem {
+  font-size: 12.5px;
+  color: #94a3b8;
+  font-style: italic;
 }
 
 @media (max-width: 860px) {

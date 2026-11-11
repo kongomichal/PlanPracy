@@ -1,0 +1,341 @@
+/* Moduł Wyceny: Formularz Ustaleń Wizji Lokalnej (Ustalenia prac) — Arkusz A4, Interaktywna mapa pytań i eksport PDF */
+.quote-form-wrap {
+  max-width: 1150px;
+  margin: 0 auto 40px;
+  padding: 0 12px;
+}
+
+.quote-view-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.quote-head-info h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.3px;
+}
+
+.quote-head-info p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.quote-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn.danger-outline-btn {
+  background: #fff;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  font-weight: 600;
+}
+.btn.danger-outline-btn:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+/* Kontener arkusza A4 z płynnym przewijaniem na telefonach */
+.quote-sheet-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 20px;
+}
+
+/* Arkusz A4 - dokładny format 210mm x 297mm */
+.sheet-a4 {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 12mm 15mm 14mm;
+  margin: 0 auto;
+  background: #ffffff;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  position: relative;
+  font-size: 10.5px;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  color: #1e293b;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.brand-logo-img {
+  max-height: 48px;
+  max-width: 170px;
+  object-fit: contain;
+}
+
+/* Tabela pytań i ustaleń wizji lokalnej */
+.insp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  color: #1e293b;
+  margin-top: 4px;
+}
+
+.insp-table td {
+  border: 1px solid #94a3b8;
+  padding: 4.5px 8px;
+  vertical-align: middle;
+}
+
+.insp-sec-row td {
+  background: #f1f5f9;
+  font-weight: 800;
+  font-size: 10px;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 5px 8px;
+}
+
+.insp-label-td {
+  width: 38%;
+  font-weight: 700;
+  color: #1e293b;
+  background: #fafafa;
+}
+
+.insp-opt-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.insp-chk {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 10px;
+  transition: color 0.1s ease;
+}
+
+.insp-chk:hover {
+  color: #0d6efd;
+}
+
+.insp-chk input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: #0f172a;
+  cursor: pointer;
+}
+
+.insp-inline-input {
+  border: none;
+  border-bottom: 1px dotted #475569;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0f172a;
+  padding: 1px 4px;
+  outline: none;
+  font-family: inherit;
+  transition: border-bottom-color 0.15s ease, background 0.15s ease;
+}
+
+.insp-inline-input:focus {
+  border-bottom: 1.5px solid #0d6efd;
+  background: #f0f9ff;
+}
+
+.insp-notes-area {
+  width: 100%;
+  flex: 1;
+  min-height: 155px;
+  border: 1px solid #94a3b8;
+  border-top: none;
+  padding: 8px 12px;
+  font-size: 10.5px;
+  line-height: 22px;
+  font-family: inherit;
+  color: #0f172a;
+  box-sizing: border-box;
+  outline: none;
+  resize: none;
+  background-image: repeating-linear-gradient(transparent, transparent 21px, #e2e8f0 21px, #e2e8f0 22px);
+  background-attachment: local;
+}
+
+.insp-notes-area:focus {
+  border-color: #0d6efd;
+}
+
+/* Modal zapisanych formularzy */
+.saved-quotes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-top: 12px;
+}
+
+.saved-quote-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  gap: 12px;
+}
+
+.saved-quote-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.saved-quote-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.saved-quote-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.saved-quote-meta {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.saved-quote-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* =========================================================
+   STYLE DRUKU (@MEDIA PRINT) — GWARANCJA DOKŁADNIE 1 STRONY A4
+   ========================================================= */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0mm;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    overflow: hidden !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .topbar,
+  #view-dashboard,
+  #view-plan,
+  #view-items,
+  #view-people,
+  #view-hours,
+  #view-reminders,
+  .quote-view-head,
+  .modal,
+  .toasts {
+    display: none !important;
+  }
+
+  #view-quote-form {
+    display: block !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
+  }
+
+  .quote-form-wrap {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: 210mm !important;
+  }
+
+  .quote-sheet-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .sheet-a4 {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    min-height: 0 !important;
+    padding: 10mm 14mm !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .insp-inline-input {
+    border-bottom: none !important;
+    padding: 0 !important;
+  }
+
+  .insp-notes-area {
+    border-color: #94a3b8 !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .quote-view-head {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px;
+  }
+  .quote-head-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .quote-head-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -14,6 +14,33 @@ const Calendar = {
   addingDateKey: null,
   editingItem: null, // { key, id }
   archiveOpen: false,
+  isCollapsed: localStorage.getItem('muraven_cal_collapsed') === '1',
+
+  toggleCollapse() {
+    this.isCollapsed = !this.isCollapsed;
+    localStorage.setItem('muraven_cal_collapsed', this.isCollapsed ? '1' : '0');
+    this.renderCollapseState();
+  },
+
+  renderCollapseState() {
+    const wrap = $('calContentWrapper');
+    const toggleIcon = $('calToggleIcon');
+    const toggleText = $('calToggleText');
+    const card = $('dashCalendarCard');
+
+    if (wrap) {
+      wrap.style.display = this.isCollapsed ? 'none' : '';
+    }
+    if (toggleIcon) {
+      toggleIcon.textContent = this.isCollapsed ? '▸' : '▾';
+    }
+    if (toggleText) {
+      toggleText.textContent = this.isCollapsed ? 'Rozwiń kalendarz' : 'Zwiń kalendarz';
+    }
+    if (card) {
+      card.classList.toggle('is-collapsed', this.isCollapsed);
+    }
+  },
 
   prevMonth() {
     this.month--;
@@ -275,6 +302,7 @@ const Calendar = {
     }
 
     this.renderArchive();
+    this.renderCollapseState();
   },
 
   init() {
@@ -282,6 +310,8 @@ const Calendar = {
     $('calNextMonthBtn')?.addEventListener('click', () => this.nextMonth());
     $('calTodayBtn')?.addEventListener('click', () => this.goToday());
     $('calCompletePastBtn')?.addEventListener('click', () => this.completePastDaysInMonth());
+    $('calToggleBtn')?.addEventListener('click', () => this.toggleCollapse());
+    $('calTitleWrap')?.addEventListener('click', () => this.toggleCollapse());
 
     $('calToggleArchiveBtn')?.addEventListener('click', () => {
       this.archiveOpen = !this.archiveOpen;

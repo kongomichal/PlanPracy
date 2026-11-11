@@ -1,6 +1,6 @@
 /* Start aplikacji: łączy moduły i obsługuje nawigację oraz kliknięcia */
 const App = {
-  currentModule: 'dashboard', // 'dashboard' | 'plan' | 'hours' | 'reminders'
+  currentModule: 'dashboard', // 'dashboard' | 'plan' | 'hours' | 'reminders' | 'quote-form'
   currentPlanTab: 'plan',    // 'plan' | 'items' | 'people'
 
   goTo(module) {
@@ -25,6 +25,8 @@ const App = {
       $('view-hours')?.classList.add('active');
     } else if (module === 'reminders') {
       $('view-reminders')?.classList.add('active');
+    } else if (module === 'quote-form') {
+      $('view-quote-form')?.classList.add('active');
     }
 
     this.render();
@@ -72,6 +74,9 @@ const App = {
     People.render();
     Hours.render();
     Reminders.render();
+    if (typeof QuoteForm !== 'undefined') {
+      QuoteForm.updateSavedBadge();
+    }
     DayEditor.refreshNameSuggestions();
     const todo = Items.todoCount();
     if ($('itemsBadge')) $('itemsBadge').textContent = todo || '';
@@ -88,6 +93,9 @@ const App = {
     JobView.init();
     Hours.init();
     Reminders.init();
+    if (typeof QuoteForm !== 'undefined') {
+      QuoteForm.init();
+    }
 
     // Nawigacja z kafelków na pulpicie
     document.querySelectorAll('[data-nav]').forEach(card => {

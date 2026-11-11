@@ -14,14 +14,15 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Muraven – prosty plan pracy, rejestracja godzin i przypomnienia.">
   <title>Muraven – Plan pracy</title>
-  <link rel="stylesheet" href="css/base.css?v=22">
-  <link rel="stylesheet" href="css/layout.css?v=22">
-  <link rel="stylesheet" href="css/components.css?v=22">
-  <link rel="stylesheet" href="css/modals.css?v=22">
-  <link rel="stylesheet" href="css/jobs.css?v=22">
-  <link rel="stylesheet" href="css/dashboard.css?v=22">
-  <link rel="stylesheet" href="css/reminders.css?v=22">
-  <link rel="stylesheet" href="css/hours.css?v=22">
+  <link rel="stylesheet" href="css/base.css?v=23">
+  <link rel="stylesheet" href="css/layout.css?v=23">
+  <link rel="stylesheet" href="css/components.css?v=23">
+  <link rel="stylesheet" href="css/modals.css?v=23">
+  <link rel="stylesheet" href="css/jobs.css?v=23">
+  <link rel="stylesheet" href="css/dashboard.css?v=23">
+  <link rel="stylesheet" href="css/reminders.css?v=23">
+  <link rel="stylesheet" href="css/hours.css?v=23">
+  <link rel="stylesheet" href="css/quote.css?v=23">
 </head>
 <body>
 
@@ -67,11 +68,11 @@
 
   <main class="page">
 
-    <!-- ============ 1. EKRAN GŁÓWNY (2 KAFELKI NA GÓRZE + KALENDARZ MIESIĘCZNY PONIŻEJ) ============ -->
+    <!-- ============ 1. EKRAN GŁÓWNY (3 KAFELKI NA GÓRZE + KALENDARZ MIESIĘCZNY PONIŻEJ) ============ -->
     <section id="view-dashboard" class="view active">
       <div class="dashboard-container">
         <div class="dashboard-grid">
-          <!-- KAFELEK: DODAJ GODZINY -->
+          <!-- KAFELEK 1: DODAJ GODZINY -->
           <div class="dash-card" data-nav="hours">
             <div class="dash-card-icon icon-hours">⏱️</div>
             <div class="dash-card-content">
@@ -83,7 +84,7 @@
             </div>
           </div>
 
-          <!-- KAFELEK: PRZYPOMNIENIA (iCloud style) -->
+          <!-- KAFELEK 2: PRZYPOMNIENIA (iCloud style) -->
           <div class="dash-card" data-nav="reminders">
             <div class="dash-card-icon icon-reminders">📝</div>
             <div class="dash-card-content">
@@ -94,12 +95,24 @@
               <span class="dash-card-btn">Otwórz przypomnienia →</span>
             </div>
           </div>
+
+          <!-- KAFELEK 3: WZÓR FORMULARZA WYCENY (Wizja lokalna) -->
+          <div class="dash-card" data-nav="quote-form">
+            <div class="dash-card-icon icon-quote">📋</div>
+            <div class="dash-card-content">
+              <h3 class="dash-card-title">Wzór formularza wyceny</h3>
+            </div>
+            <div class="dash-card-footer">
+              <span class="dash-stat" id="dashQuoteStat">Wizja lokalna</span>
+              <span class="dash-card-btn">Otwórz formularz →</span>
+            </div>
+          </div>
         </div>
 
-        <!-- KALENDARZ MIESIĘCZNY (PONIEDZIAŁEK – NIEDZIELA) POD KAFELKAMI -->
+        <!-- KALENDARZ MIESIĘCZNY (PONIEDZIAŁEK – NIEDZIELA) Z MOŻLIWOŚCIĄ ZWIJANIA / ROZWIJANIA -->
         <div class="dash-calendar-card" id="dashCalendarCard">
           <div class="cal-toolbar">
-            <div class="cal-title-wrap">
+            <div class="cal-title-wrap" id="calTitleWrap" title="Kliknij, aby zwinąć lub rozwinąć kalendarz">
               <span class="cal-title-icon">📅</span>
               <h3 id="calMonthTitle" class="cal-month-title">Miesiąc</h3>
               <button type="button" class="btn small success-btn cal-complete-past-btn" id="calCompletePastBtn" title="Odkliknij wszystkie minione dni w tym miesiącu i przenieś je do archiwum" hidden>
@@ -110,35 +123,41 @@
               <button type="button" class="btn cal-nav-btn" id="calPrevMonthBtn" title="Poprzedni miesiąc">← Poprzedni</button>
               <button type="button" class="btn cal-today-btn" id="calTodayBtn" title="Wróć do bieżącego miesiąca">Dziś</button>
               <button type="button" class="btn cal-nav-btn" id="calNextMonthBtn" title="Następny miesiąc">Następny →</button>
+              <button type="button" class="btn cal-toggle-btn" id="calToggleBtn" title="Zwiń lub rozwiń widok kalendarza">
+                <span id="calToggleIcon">▾</span> <span id="calToggleText">Zwiń kalendarz</span>
+              </button>
             </div>
           </div>
 
-          <div class="cal-weekdays">
-            <div class="cal-wday">Poniedziałek</div>
-            <div class="cal-wday">Wtorek</div>
-            <div class="cal-wday">Środa</div>
-            <div class="cal-wday">Czwartek</div>
-            <div class="cal-wday">Piątek</div>
-            <div class="cal-wday weekend">Sobota</div>
-            <div class="cal-wday weekend">Niedziela</div>
-          </div>
-
-          <div id="calGrid" class="cal-grid"></div>
-        </div>
-
-        <!-- ARCHIWUM WYKONANYCH (ODKLIKANYCH) DNI -->
-        <div class="cal-archive-section" id="calArchiveSection">
-          <div class="cal-archive-top">
-            <div class="cal-archive-title-wrap">
-              <span>🗄️</span>
-              <h4>Archiwum wykonanych dni (<span id="calArchiveCount">0</span>)</h4>
+          <!-- Treść kalendarza (zwijana/rozwijana) -->
+          <div id="calContentWrapper" class="cal-content-wrapper">
+            <div class="cal-weekdays">
+              <div class="cal-wday">Poniedziałek</div>
+              <div class="cal-wday">Wtorek</div>
+              <div class="cal-wday">Środa</div>
+              <div class="cal-wday">Czwartek</div>
+              <div class="cal-wday">Piątek</div>
+              <div class="cal-wday weekend">Sobota</div>
+              <div class="cal-wday weekend">Niedziela</div>
             </div>
-            <div class="cal-archive-actions">
-              <button type="button" class="btn small" id="calRestoreAllBtn" hidden>↩ Przywróć wszystkie</button>
-              <button type="button" class="btn small" id="calToggleArchiveBtn">Pokaż archiwum</button>
+
+            <div id="calGrid" class="cal-grid"></div>
+
+            <!-- ARCHIWUM WYKONANYCH (ODKLIKANYCH) DNI -->
+            <div class="cal-archive-section" id="calArchiveSection">
+              <div class="cal-archive-top">
+                <div class="cal-archive-title-wrap">
+                  <span>🗄️</span>
+                  <h4>Archiwum wykonanych dni (<span id="calArchiveCount">0</span>)</h4>
+                </div>
+                <div class="cal-archive-actions">
+                  <button type="button" class="btn small" id="calRestoreAllBtn" hidden>↩ Przywróć wszystkie</button>
+                  <button type="button" class="btn small" id="calToggleArchiveBtn">Pokaż archiwum</button>
+                </div>
+              </div>
+              <div id="calArchiveBox" class="cal-archive-box" hidden></div>
             </div>
           </div>
-          <div id="calArchiveBox" class="cal-archive-box" hidden></div>
         </div>
       </div>
     </section>
@@ -381,6 +400,292 @@
       </div>
     </section>
 
+    <!-- ============ 5. MODUŁ WZÓR FORMULARZA WYCENY (Wizja lokalna) ============ -->
+    <section id="view-quote-form" class="view">
+      <div class="quote-form-wrap">
+        <div class="quote-view-head">
+          <div class="quote-head-info">
+            <h2>Wzór formularza wyceny (Wizja lokalna)</h2>
+            <p>Interaktywna mapa pytań do wyceny · Arkusz A4 · Zapisz i pobierz PDF</p>
+          </div>
+          <div class="quote-head-actions">
+            <button type="button" class="btn" id="btnOpenSavedQuotesModal" title="Otwórz listę zapisanych formularzy wycen">
+              📂 Zapisane wyceny (<span id="savedQuotesCount">0</span>)
+            </button>
+            <button type="button" class="btn success-btn" id="btnSaveQuoteDraft" title="Zapisz formularz w bazie aplikacji">
+              💾 Zapisz w bazie
+            </button>
+            <button type="button" class="btn primary" id="btnExportQuotePdf" title="Pobierz gotowy dokument w pliku PDF">
+              📥 Pobierz PDF
+            </button>
+            <button type="button" class="btn" id="btnPrintQuoteA4" title="Drukuj lub podgląd wydruku A4">
+              🖨️ Drukuj A4
+            </button>
+            <button type="button" class="btn danger-outline-btn" id="btnClearQuoteForm" title="Wyczyść wszystkie pola formularza">
+              ✏️ Wyczyść
+            </button>
+          </div>
+        </div>
+
+        <!-- ARKUSZ A4: FORMULARZ USTALEŃ WIZJI LOKALNEJ -->
+        <div class="quote-sheet-container">
+          <div class="sheet-a4" id="sheetInspectionDoc">
+            <!-- Header with logo and Doc Nr -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <img id="inspLogo" class="brand-logo-img" src="img/logo.jpg" alt="Muraven Logo" onerror="this.style.display='none';">
+                <div>
+                  <div style="font-size: 16px; font-weight: 900; letter-spacing: 0.6px; color: #0f172a;">
+                    FORMULARZ USTALEŃ WIZJI LOKALNEJ
+                  </div>
+                  <div style="font-size: 10px; color: #475569; font-weight: 600;">
+                    Karta obmiarowa, techniczna i organizacyjna przed realizacją prac
+                  </div>
+                </div>
+              </div>
+              <div style="text-align: right; font-size: 13px; font-weight: 800; color: #0f172a;">
+                Nr: <input type="text" id="inspDocNr" class="insp-inline-input" value="OFT/2026/01" style="width: 125px; font-size: 13px; text-align: right; font-weight: 800;">
+              </div>
+            </div>
+
+            <!-- Tabela: 1-5 Sekcje -->
+            <table class="insp-table">
+              <tbody>
+                <!-- 1. INFORMACJE PODSTAWOWE -->
+                <tr class="insp-sec-row">
+                  <td colspan="2">1. INFORMACJE PODSTAWOWE</td>
+                </tr>
+                <tr>
+                  <td style="width: 50%;">
+                    <b>Nazwa / Inwestor:</b>
+                    <input type="text" id="inspClientName" class="insp-inline-input" placeholder="Wpisz nazwę klienta / obiektu..." style="width: 68%;">
+                  </td>
+                  <td style="width: 50%;">
+                    <div class="insp-opt-group">
+                      <b>Pilność zlecenia:</b>
+                      <label class="insp-chk"><input type="checkbox" name="insp_urgency"> Pilne</label>
+                      <label class="insp-chk"><input type="checkbox" name="insp_urgency"> 1 miesiąc</label>
+                      <label class="insp-chk"><input type="checkbox" name="insp_urgency"> 3 miesiące +</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <b>Data sporządzenia:</b>
+                    <input type="text" id="inspDate" class="insp-inline-input" value="" placeholder="dd.mm.rrrr" style="width: 62%;">
+                  </td>
+                  <td>
+                    <b>Adres inwestycji:</b>
+                    <input type="text" id="inspAddress" class="insp-inline-input" value="" placeholder="Wpisz adres..." style="width: 68%;">
+                  </td>
+                </tr>
+
+                <!-- 2. MEDIA I BEZPOŚREDNI DOSTĘP -->
+                <tr class="insp-sec-row">
+                  <td colspan="2">2. MEDIA I BEZPOŚREDNI DOSTĘP</td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Dostęp do energii elektrycznej:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> Tak (230V)</label>
+                      <label class="insp-chk"><input type="checkbox"> Tak (400V / Siła)</label>
+                      <label class="insp-chk"><input type="checkbox"> Brak</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Dostęp do bieżącej wody:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> Tak (na miejscu)</label>
+                      <label class="insp-chk"><input type="checkbox"> Tak (zawór)</label>
+                      <label class="insp-chk"><input type="checkbox"> Brak</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Zaplecze socjalne / Dostęp do WC:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> Na miejscu</label>
+                      <label class="insp-chk"><input type="checkbox"> Wymagany wynajem Toi-Toi</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Dostępność i wniesienie:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> Parter</label>
+                      <label class="insp-chk">
+                        <input type="checkbox"> Piętro:
+                        <input type="text" class="insp-inline-input" style="width: 75px;" placeholder="........">
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- 3. STAN OBIEKTU I WSPÓŁPRACA NA MIEJSCU -->
+                <tr class="insp-sec-row">
+                  <td colspan="2">3. STAN OBIEKTU I WSPÓŁPRACA NA MIEJSCU</td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Dokumentacja wstępna (stan obiektu):</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> Sprawdzić stan obiektu i wykonać dokumentację zdjęciową zauważonych wad</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Obecność innych ekip (praca równoległa):</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> Brak (wyłączność)</label>
+                      <label class="insp-chk"><input type="checkbox"> Tak (praca równoległa)</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Ogrzewanie w sezonie:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> Działa</label>
+                      <label class="insp-chk"><input type="checkbox"> Brak (wymagane nagrzewnice)</label>
+                      <label class="insp-chk"><input type="checkbox"> Po stronie Inwestora</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Magazyn / Zamykane pomieszczenie:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> Tak (zamykane)</label>
+                      <label class="insp-chk"><input type="checkbox"> Brak (odpowiedzialność za sprzęt)</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Zabezpieczenie powierzchni wymagane:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> TAK</label>
+                      <label class="insp-chk"><input type="checkbox"> NIE</label>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- 4. ZASADY BUDYNKU I LOGISTYKA -->
+                <tr class="insp-sec-row">
+                  <td colspan="2">4. ZASADY BUDYNKU I LOGISTYKA</td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Restrykcje dot. hałasu:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> Brak</label>
+                      <label class="insp-chk">
+                        <input type="checkbox"> Godziny głośne:
+                        <input type="text" class="insp-inline-input" style="width: 45px; text-align:center;" placeholder="...."> do
+                        <input type="text" class="insp-inline-input" style="width: 45px; text-align:center;" placeholder="....">
+                      </label>
+                      <label class="insp-chk"><input type="checkbox"> Wymagana zgoda wspólnoty</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Tryb prac:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> DZIEŃ</label>
+                      <label class="insp-chk"><input type="checkbox"> NOC</label>
+                      <label class="insp-chk"><input type="checkbox"> WEEKENDY</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Określone godziny prac:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> NIE</label>
+                      <label class="insp-chk">
+                        <input type="checkbox"> TAK – od godz.
+                        <input type="text" class="insp-inline-input" style="width: 48px; text-align:center;" placeholder="...."> do godz.
+                        <input type="text" class="insp-inline-input" style="width: 48px; text-align:center;" placeholder="....">
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Odpady i gruz (kontener):</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> Inwestor</label>
+                      <label class="insp-chk"><input type="checkbox"> Wykonawca</label>
+                      <label class="insp-chk"><input type="checkbox"> Brak potrzeby</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Dystans dojazdu (w 1 stronę):</td>
+                  <td>
+                    <input type="text" class="insp-inline-input" style="width: 70px; text-align: right;" placeholder="........"> <b>km</b>
+                  </td>
+                </tr>
+
+                <!-- 5. USTALENIA MATERIAŁOWE I FINANSE -->
+                <tr class="insp-sec-row">
+                  <td colspan="2">5. USTALENIA MATERIAŁOWE I FINANSE</td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Materiały po naszej stronie:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> CAŁOŚĆ</label>
+                      <label class="insp-chk"><input type="checkbox"> CHEMIA</label>
+                      <label class="insp-chk"><input type="checkbox"> NIE</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Zaliczka na materiał:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> TAK</label>
+                      <label class="insp-chk"><input type="checkbox"> NIE</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="insp-label-td">Rozliczenie etapami:</td>
+                  <td>
+                    <div class="insp-opt-group">
+                      <label class="insp-chk"><input type="checkbox"> TAK</label>
+                      <label class="insp-chk"><input type="checkbox"> NIE</label>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- 6. NOTATKI POLOWE, POMIARY, RZUTY I SZCZEGÓŁY WYKONAWCZE -->
+                <tr class="insp-sec-row">
+                  <td colspan="2">6. NOTATKI POLOWE, POMIARY, RZUTY I SZCZEGÓŁY WYKONAWCZE</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <textarea id="inspNotesArea" class="insp-notes-area" placeholder="Miejsce na notatki z wizji lokalnej, obmiary, wymiary ścian/nawierzchni, ustalenia z klientem (możesz wpisać tutaj przed wydrukiem lub zostawić puste linie do wypełnienia długopisem na budowie)..."></textarea>
+
+            <div style="margin-top: auto; padding-top: 14px; display: flex; justify-content: flex-end; align-items: center; font-size: 11px; color: #1e293b;">
+              <div>
+                <b>Podpis sporządzającego wycenę:</b> ........................................................................
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ============ EDYCJA DNIA ============ -->
@@ -611,26 +916,42 @@
     </div>
   </div>
 
+  <!-- ============ MODAL: ZAPISANE FORMULARZE WYCEN ============ -->
+  <div id="savedQuotesModal" class="modal">
+    <div class="modal-box saved-quotes-modal-box">
+      <div class="modal-head">
+        <h2>Zapisane formularze wycen (Wizja lokalna)</h2>
+        <button class="btn icon" data-close aria-label="Zamknij">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted small" style="margin-bottom: 12px;">Lista formularzy wycen zapisanych w aplikacji. Możesz w każdej chwili wczytać wybrany formularz lub usunąć go z listy.</p>
+        <div id="savedQuotesList" class="saved-quotes-list"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="toasts" class="toasts"></div>
 
   <!-- Skrypty: kolejność ma znaczenie -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=22"></script>
-  <script src="js/core/utils.js?v=22"></script>
-  <script src="js/core/sample-data.js?v=22"></script>
-  <script src="js/core/storage.js?v=22"></script>
-  <script src="js/features/auth.js?v=22"></script>
-  <script src="js/features/plan.js?v=22"></script>
-  <script src="js/features/calendar.js?v=22"></script>
-  <script src="js/features/day-editor.js?v=22"></script>
-  <script src="js/features/items.js?v=22"></script>
-  <script src="js/features/people.js?v=22"></script>
-  <script src="js/features/hours.js?v=22"></script>
-  <script src="js/features/reminders.js?v=22"></script>
-  <script src="js/features/job-view.js?v=22"></script>
-  <script src="js/features/menu.js?v=22"></script>
-  <script src="js/main.js?v=22"></script>
+  <script src="js/core/firebase-config.js?v=23"></script>
+  <script src="js/core/utils.js?v=23"></script>
+  <script src="js/core/sample-data.js?v=23"></script>
+  <script src="js/core/storage.js?v=23"></script>
+  <script src="js/features/auth.js?v=23"></script>
+  <script src="js/features/plan.js?v=23"></script>
+  <script src="js/features/calendar.js?v=23"></script>
+  <script src="js/features/day-editor.js?v=23"></script>
+  <script src="js/features/items.js?v=23"></script>
+  <script src="js/features/people.js?v=23"></script>
+  <script src="js/features/hours.js?v=23"></script>
+  <script src="js/features/reminders.js?v=23"></script>
+  <script src="js/libs/html2pdf.bundle.min.js"></script>
+  <script src="js/features/quote-form.js?v=23"></script>
+  <script src="js/features/job-view.js?v=23"></script>
+  <script src="js/features/menu.js?v=23"></script>
+  <script src="js/main.js?v=23"></script>
 </body>
 </html>

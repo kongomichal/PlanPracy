@@ -16,12 +16,16 @@ const Store = {
   CALENDAR_KEY: 'muraven_calendar_v1',
   calendarNotes: null,
 
+  QUOTE_FORMS_KEY: 'muraven_quote_forms_v1',
+  quoteForms: null,
+
   col() { return firebase.firestore().collection('days'); },
 
   load() {
     this.loadReminders();
     this.loadProjects();
     this.loadCalendar();
+    this.loadQuoteForms();
     if (CLOUD_ENABLED) { this.data = {}; return; } // dane przyjdą z chmury po zalogowaniu
     try {
       const raw = localStorage.getItem(this.KEY);
@@ -44,6 +48,7 @@ const Store = {
       let cloudReminders = null;
       let cloudProjects = null;
       let cloudCalendar = null;
+      let cloudQuoteForms = null;
 
       snap.forEach(doc => {
         if (doc.id === '_reminders') {
@@ -52,6 +57,8 @@ const Store = {
           cloudProjects = doc.data();
         } else if (doc.id === '_calendar') {
           cloudCalendar = doc.data();
+        } else if (doc.id === '_quote_forms') {
+          cloudQuoteForms = doc.data();
         } else if (!doc.id.startsWith('_')) {
           raw[doc.id] = doc.data();
         }
@@ -90,6 +97,13 @@ const Store = {
         this.saveCalendar();
       }
 
+      if (cloudQuoteForms && Array.isArray(cloudQuoteForms.items)) {
+        this.quoteForms = cloudQuoteForms.items;
+        localStorage.setItem(this.QUOTE_FORMS_KEY, JSON.stringify(this.quoteForms));
+      } else if (!cloudQuoteForms && this.quoteForms && firebase.auth && firebase.auth().currentUser) {
+        this.saveQuoteForms();
+      }
+
       onChange();
     }, (err) => { console.error(err); toast('Brak połączenia z bazą danych'); });
   },
@@ -102,6 +116,7 @@ const Store = {
       this.reminders = null;
       this.projectsMeta = null;
       this.calendarNotes = null;
+      this.quoteForms = null;
     }
   },
 
@@ -544,6 +559,56 @@ const Store = {
     return true;
   },
 
+  /* ---------- Formularze Wyceny (Wizja lokalna / Ustalenia prac) ---------- */
+  loadQuoteForms() {
+    try {
+      const raw = localStorage.getItem(this.QUOTE_FORMS_KEY);
+      if (raw) {
+        this.quoteForms = JSON.parse(raw);
+        if (!Array.isArray(this.quoteForms)) this.quoteForms = [];
+        return this.quoteForms;
+      }
+    } catch (e) { console.error('Błąd odczytu formularzy wycen', e); }
+    this.quoteForms = [];
+    if (!CLOUD_ENABLED) {
+      this.saveQuoteForms();
+    }
+    return this.quoteForms;
+  },
+
+  saveQuoteForms() {
+    if (!this.quoteForms) return;
+    localStorage.setItem(this.QUOTE_FORMS_KEY, JSON.stringify(this.quoteForms));
+    if (CLOUD_ENABLED && firebase.firestore && firebase.auth && firebase.auth().currentUser) {
+      this.col().doc('_quote_forms').set({ items: JSON.parse(JSON.stringify(this.quoteForms)) })
+        .catch((err) => console.error('Błąd zapisu formularzy wycen w chmurze', err));
+    }
+  },
+
+  getQuoteForms() {
+    if (!this.quoteForms) this.loadQuoteForms();
+    return Array.isArray(this.quoteForms) ? this.quoteForms : [];
+  },
+
+  saveQuoteFormEntry(entry) {
+    if (!this.quoteForms) this.loadQuoteForms();
+    const existingIdx = this.quoteForms.findIndex(q => q.id === entry.id);
+    if (existingIdx !== -1) {
+      this.quoteForms[existingIdx] = entry;
+    } else {
+      this.quoteForms.unshift(entry);
+    }
+    this.saveQuoteForms();
+    return entry;
+  },
+
+  deleteQuoteFormEntry(id) {
+    if (!this.quoteForms) this.loadQuoteForms();
+    this.quoteForms = this.quoteForms.filter(q => q.id !== id);
+    this.saveQuoteForms();
+    return true;
+  },
+
   addHoursEntry({ date, name, from, to, project, note }) {
     if (!date || !name || !from || !to) return false;
     const day = this.get(date);
@@ -583,7 +648,8 @@ const Store = {
       days: this.data,
       reminders: this.reminders || this.loadReminders(),
       projectsMeta: this.projectsMeta || this.loadProjects(),
-      calendarNotes: this.calendarNotes || this.loadCalendar()
+      calendarNotes: this.calendarNotes || this.loadCalendar(),
+      quoteForms: this.quoteForms || this.loadQuoteForms()
     }, null, 2);
   },
 
@@ -609,6 +675,10 @@ const Store = {
           doneDays: (parsed.calendarNotes.doneDays && typeof parsed.calendarNotes.doneDays === 'object') ? parsed.calendarNotes.doneDays : {}
         };
         this.saveCalendar();
+      }
+      if (parsed.quoteForms && Array.isArray(parsed.quoteForms)) {
+        this.quoteForms = parsed.quoteForms;
+        this.saveQuoteForms();
       }
     } else {
       this.replaceAll(this.normalize(parsed));

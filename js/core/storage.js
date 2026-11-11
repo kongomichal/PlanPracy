@@ -48,7 +48,6 @@ const Store = {
       let cloudReminders = null;
       let cloudProjects = null;
       let cloudCalendar = null;
-      let cloudQuoteForms = null;
 
       snap.forEach(doc => {
         if (doc.id === '_reminders') {
@@ -57,8 +56,6 @@ const Store = {
           cloudProjects = doc.data();
         } else if (doc.id === '_calendar') {
           cloudCalendar = doc.data();
-        } else if (doc.id === '_quote_forms') {
-          cloudQuoteForms = doc.data();
         } else if (!doc.id.startsWith('_')) {
           raw[doc.id] = doc.data();
         }
@@ -95,13 +92,6 @@ const Store = {
         localStorage.setItem(this.CALENDAR_KEY, JSON.stringify(this.calendarNotes));
       } else if (!cloudCalendar && this.calendarNotes && firebase.auth && firebase.auth().currentUser) {
         this.saveCalendar();
-      }
-
-      if (cloudQuoteForms && Array.isArray(cloudQuoteForms.items)) {
-        this.quoteForms = cloudQuoteForms.items;
-        localStorage.setItem(this.QUOTE_FORMS_KEY, JSON.stringify(this.quoteForms));
-      } else if (!cloudQuoteForms && this.quoteForms && firebase.auth && firebase.auth().currentUser) {
-        this.saveQuoteForms();
       }
 
       onChange();

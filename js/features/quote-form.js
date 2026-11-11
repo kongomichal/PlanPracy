@@ -152,39 +152,12 @@ const QuoteForm = {
     toast(`Zapisano formularz: ${docNr} (${client})`);
   },
 
-  /** Eksportuje formularz bezpośrednio do pliku PDF. */
+  /** Eksportuje formularz bezpośrednio do pliku PDF lub druku A4. */
   exportPdf() {
-    const sheet = $('sheetInspectionDoc');
-    if (!sheet) return;
-
-    const docNr = ($('inspDocNr')?.value || 'OFT_2026').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
-    const client = ($('inspClientName')?.value || 'Wycena').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
-    const filename = `Wycena_${docNr}_${client}.pdf`;
-
-    if (typeof html2pdf !== 'undefined') {
-      toast('Generowanie pliku PDF...');
-      const opt = {
-        margin: [4, 4, 4, 4],
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          scrollY: 0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(opt).from(sheet).save().then(() => {
-        toast(`Pobrano gotowy plik PDF: ${filename}`);
-      }).catch(err => {
-        console.warn('html2pdf błąd, przejście do druku systemowego', err);
-        window.print();
-      });
-    } else {
+    toast('Wybierz „Zapisz jako PDF” w oknie wydruku');
+    setTimeout(() => {
       window.print();
-    }
+    }, 200);
   },
 
   /** Druk A4 przez okno systemowe. */
@@ -294,3 +267,4 @@ const QuoteForm = {
     this.updateSavedBadge();
   }
 };
+

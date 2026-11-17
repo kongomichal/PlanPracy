@@ -7,6 +7,8 @@ const Hours = {
   filterProject: 'ALL',
   editingProjectName: null,
   dropdownShowAll: true,
+  editingEmployeeName: null,
+  empDropdownShowAll: true,
 
   /** Zbiera dane w strukturze: osoba -> projekt -> wpisy (dla widoku kart). */
   collect() {
@@ -155,6 +157,7 @@ const Hours = {
       $('qhProject').value = '';
       if ($('qhNote')) $('qhNote').value = '';
       this.closeProjectDropdown();
+      this.closeEmployeeDropdown();
     }
   },
 
@@ -220,6 +223,7 @@ const Hours = {
   openProjectDropdown(showAll = false) {
     const dd = $('qhProjectDropdown');
     if (!dd) return;
+    this.closeEmployeeDropdown();
     this.dropdownShowAll = showAll;
     this.renderProjectDropdown();
     dd.hidden = false;
@@ -337,6 +341,145 @@ const Hours = {
     toast(`Usunięto projekt „${trimmed}” z listy wyboru`);
   },
 
+  /* ---------- Pasek wyboru, edycji i usuwania pracowników ---------- */
+  refreshEmployeeSuggestions() {
+    let dl = $('peopleNames');
+    if (!dl) {
+      dl = document.createElement('datalist');
+      dl.id = 'peopleNames';
+      document.body.appendChild(dl);
+    }
+    const people = Store.getPeople();
+    dl.innerHTML = people
+      .map(p => `<option value="${esc(p)}">`).join('');
+
+    const dd = $('qhEmployeeDropdown');
+    if (dd && !dd.hidden) {
+      this.renderEmployeeDropdown();
+    }
+  },
+
+  openEmployeeDropdown(showAll = false) {
+    const dd = $('qhEmployeeDropdown');
+    if (!dd) return;
+    this.closeProjectDropdown();
+    this.empDropdownShowAll = showAll;
+    this.renderEmployeeDropdown();
+    dd.hidden = false;
+  },
+
+  closeEmployeeDropdown() {
+    const dd = $('qhEmployeeDropdown');
+    if (!dd) return;
+    this.editingEmployeeName = null;
+    dd.hidden = true;
+  },
+
+  renderEmployeeDropdown() {
+    const dd = $('qhEmployeeDropdown');
+    if (!dd) return;
+
+    const allPeople = Store.getPeople();
+    const query = ($('qhName')?.value || '').trim();
+    const queryLower = query.toLowerCase();
+
+    const filtered = (this.empDropdownShowAll || !query)
+      ? allPeople
+      : allPeople.filter(p => p.toLowerCase().includes(queryLower));
+
+    const exactExists = query && allPeople.some(p => p.toLowerCase() === queryLower);
+
+    let html = '';
+
+    if (query && !exactExists) {
+      html += `
+        <button type="button" class="proj-combo-add-new" data-add-new-emp="${esc(query)}">
+          <span>＋ Dodaj pracownika: <strong>"${esc(query)}"</strong></span>
+        </button>`;
+    }
+
+    if (filtered.length > 0) {
+      html += `
+        <div class="proj-combo-header">
+          <span>Wybierz pracownika (${filtered.length})</span>
+          <span>Edytuj / Usuń</span>
+        </div>`;
+
+      html += filtered.map(p => {
+        if (this.editingEmployeeName === p) {
+          return `
+            <div class="proj-combo-item is-active" data-emp-row="${esc(p)}">
+              <div class="proj-combo-edit-row">
+                <input type="text" class="proj-combo-edit-input" value="${esc(p)}" data-orig-emp="${esc(p)}" autocomplete="off">
+                <button type="button" class="proj-combo-btn save" data-save-emp="${esc(p)}" title="Zapisz nowe imię i nazwisko">✓</button>
+                <button type="button" class="proj-combo-btn" data-cancel-emp title="Anuluj edycję">✕</button>
+              </div>
+            </div>`;
+        }
+        return `
+          <div class="proj-combo-item" data-emp-row="${esc(p)}">
+            <span class="proj-combo-name" data-select-emp="${esc(p)}">${esc(p)}</span>
+            <div class="proj-combo-actions">
+              <button type="button" class="proj-combo-btn edit" data-edit-emp="${esc(p)}" title="Edytuj imię i nazwisko tego pracownika">✏️</button>
+              <button type="button" class="proj-combo-btn del" data-del-emp="${esc(p)}" title="Usuń tego pracownika z listy">✕</button>
+            </div>
+          </div>`;
+      }).join('');
+    } else if (!query) {
+      html += `<div class="proj-combo-empty">Brak zapisanych pracowników. Wpisz imię i nazwisko w polu powyżej.</div>`;
+    } else {
+      html += `<div class="proj-combo-empty">Brak pasujących pracowników na liście — możesz zapisać wpis lub kliknąć „＋ Dodaj pracownika” powyżej.</div>`;
+    }
+
+    dd.innerHTML = html;
+
+    if (this.editingEmployeeName) {
+      const inp = dd.querySelector('.proj-combo-edit-input');
+      if (inp) {
+        setTimeout(() => {
+          inp.focus();
+          inp.select();
+        }, 10);
+      }
+    }
+  },
+
+  saveEditedEmployee(oldName, newName) {
+    const trimmedNew = String(newName || '').trim();
+    const trimmedOld = String(oldName || '').trim();
+    if (!trimmedNew) {
+      toast('Imię i nazwisko pracownika nie może być puste');
+      return;
+    }
+    this.editingEmployeeName = null;
+    if (trimmedNew !== trimmedOld) {
+      Store.renamePerson(trimmedOld, trimmedNew);
+      const qhInput = $('qhName');
+      if (qhInput && qhInput.value.trim().toLowerCase() === trimmedOld.toLowerCase()) {
+        qhInput.value = trimmedNew;
+      }
+      App.render();
+      this.openEmployeeDropdown(true);
+      toast(`Zmieniono dane pracownika na „${trimmedNew}”`);
+    } else {
+      this.renderEmployeeDropdown();
+    }
+  },
+
+  deleteEmployeeFromList(empName) {
+    const trimmed = String(empName || '').trim();
+    if (!trimmed) return;
+    Store.deletePerson(trimmed);
+    const qhInput = $('qhName');
+    if (qhInput && qhInput.value.trim().toLowerCase() === trimmed.toLowerCase()) {
+      qhInput.value = '';
+    }
+    this.editingEmployeeName = null;
+    this.refreshEmployeeSuggestions();
+    this.openEmployeeDropdown(true);
+    toast(`Usunięto pracownika „${trimmed}” z listy wyboru`);
+  },
+
   /* ---------- Renderowanie tabeli Rejestru Godzin RBH ---------- */
   renderTable() {
     const tbody = $('kadryTableBody');
@@ -431,6 +574,7 @@ const Hours = {
 
   render() {
     this.refreshProjectSuggestions();
+    this.refreshEmployeeSuggestions();
     this.populateFilters();
     this.renderTable();
     this.renderSummaryCards();
@@ -725,6 +869,7 @@ const Hours = {
     if (newDate === origKey) {
       const person = origJob.people[personIndex];
       person.name = newName;
+      Store.ensurePerson(newName);
       person.from = newFrom;
       person.to = newTo;
       person.realFrom = newFrom;
@@ -831,6 +976,109 @@ const Hours = {
       this.submitQuick();
     });
 
+    // 6a. Pasek wyboru, edycji i usuwania pracowników (Pracownik)
+    const empInput = $('qhName');
+    const empToggle = $('qhEmployeeToggle');
+    const empDropdown = $('qhEmployeeDropdown');
+
+    empInput?.addEventListener('focus', () => {
+      this.openEmployeeDropdown(true);
+    });
+
+    empInput?.addEventListener('click', () => {
+      if (empDropdown?.hidden) {
+        this.openEmployeeDropdown(true);
+      }
+    });
+
+    empInput?.addEventListener('input', () => {
+      this.editingEmployeeName = null;
+      this.openEmployeeDropdown(false);
+    });
+
+    empInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.closeEmployeeDropdown();
+      }
+    });
+
+    empToggle?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (empDropdown?.hidden) {
+        this.openEmployeeDropdown(true);
+        empInput?.focus();
+      } else {
+        this.closeEmployeeDropdown();
+      }
+    });
+
+    empDropdown?.addEventListener('click', (e) => {
+      e.stopPropagation();
+
+      const selectBtn = e.target.closest('[data-select-emp]');
+      if (selectBtn) {
+        if (empInput) empInput.value = selectBtn.dataset.selectEmp;
+        this.closeEmployeeDropdown();
+        return;
+      }
+
+      const addNewBtn = e.target.closest('[data-add-new-emp]');
+      if (addNewBtn) {
+        const newEmp = addNewBtn.dataset.addNewEmp;
+        Store.ensurePerson(newEmp);
+        if (empInput) empInput.value = newEmp;
+        this.refreshEmployeeSuggestions();
+        this.closeEmployeeDropdown();
+        toast(`Dodano pracownika „${newEmp}” do listy`);
+        return;
+      }
+
+      const editBtn = e.target.closest('[data-edit-emp]');
+      if (editBtn) {
+        this.editingEmployeeName = editBtn.dataset.editEmp;
+        this.renderEmployeeDropdown();
+        return;
+      }
+
+      const cancelBtn = e.target.closest('[data-cancel-emp]');
+      if (cancelBtn) {
+        this.editingEmployeeName = null;
+        this.renderEmployeeDropdown();
+        return;
+      }
+
+      const saveBtn = e.target.closest('[data-save-emp]');
+      if (saveBtn) {
+        const origName = saveBtn.dataset.saveEmp;
+        const row = saveBtn.closest('.proj-combo-item');
+        const inp = row?.querySelector('.proj-combo-edit-input');
+        this.saveEditedEmployee(origName, inp ? inp.value : '');
+        return;
+      }
+
+      const delBtn = e.target.closest('[data-del-emp]');
+      if (delBtn) {
+        this.deleteEmployeeFromList(delBtn.dataset.delEmp);
+        return;
+      }
+    });
+
+    empDropdown?.addEventListener('keydown', (e) => {
+      if (!e.target.classList.contains('proj-combo-edit-input')) return;
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        const origName = e.target.dataset.origEmp;
+        this.saveEditedEmployee(origName, e.target.value);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.editingEmployeeName = null;
+        this.renderEmployeeDropdown();
+      }
+    });
+
     // 6b. Pasek wyboru, edycji i usuwania projektów (Budowa / Projekt)
     const projInput = $('qhProject');
     const projToggle = $('qhProjectToggle');
@@ -935,6 +1183,9 @@ const Hours = {
     });
 
     document.addEventListener('mousedown', (e) => {
+      if (!e.target.closest('#qhEmployeeCombo')) {
+        this.closeEmployeeDropdown();
+      }
       if (!e.target.closest('#qhProjectCombo')) {
         this.closeProjectDropdown();
       }

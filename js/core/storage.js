@@ -13,6 +13,9 @@ const Store = {
   PROJECTS_KEY: 'muraven_projects_v1',
   projectsMeta: null,
 
+  PEOPLE_KEY: 'muraven_people_v1',
+  peopleMeta: null,
+
   CALENDAR_KEY: 'muraven_calendar_v1',
   calendarNotes: null,
 
@@ -24,6 +27,7 @@ const Store = {
   load() {
     this.loadReminders();
     this.loadProjects();
+    this.loadPeople();
     this.loadCalendar();
     this.loadQuoteForms();
     if (CLOUD_ENABLED) { this.data = {}; return; } // dane przyjdą z chmury po zalogowaniu
@@ -47,6 +51,7 @@ const Store = {
       const raw = {};
       let cloudReminders = null;
       let cloudProjects = null;
+      let cloudPeople = null;
       let cloudCalendar = null;
 
       snap.forEach(doc => {
@@ -54,6 +59,8 @@ const Store = {
           cloudReminders = doc.data();
         } else if (doc.id === '_projects') {
           cloudProjects = doc.data();
+        } else if (doc.id === '_people') {
+          cloudPeople = doc.data();
         } else if (doc.id === '_calendar') {
           cloudCalendar = doc.data();
         } else if (!doc.id.startsWith('_')) {
@@ -84,6 +91,16 @@ const Store = {
         this.saveProjects();
       }
 
+      if (cloudPeople && (Array.isArray(cloudPeople.custom) || Array.isArray(cloudPeople.deleted))) {
+        this.peopleMeta = {
+          custom: Array.isArray(cloudPeople.custom) ? cloudPeople.custom : [],
+          deleted: Array.isArray(cloudPeople.deleted) ? cloudPeople.deleted : []
+        };
+        localStorage.setItem(this.PEOPLE_KEY, JSON.stringify(this.peopleMeta));
+      } else if (!cloudPeople && this.peopleMeta && firebase.auth && firebase.auth().currentUser) {
+        this.savePeople();
+      }
+
       if (cloudCalendar && typeof cloudCalendar === 'object') {
         this.calendarNotes = {
           byDate: (cloudCalendar.byDate && typeof cloudCalendar.byDate === 'object') ? cloudCalendar.byDate : {},
@@ -105,6 +122,7 @@ const Store = {
       this.data = {};
       this.reminders = null;
       this.projectsMeta = null;
+      this.peopleMeta = null;
       this.calendarNotes = null;
       this.quoteForms = null;
     }
@@ -426,6 +444,162 @@ const Store = {
     return true;
   },
 
+  /* ---------- Lista pracowników (Imię i nazwisko) ---------- */
+  loadPeople() {
+    try {
+      const raw = localStorage.getItem(this.PEOPLE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        this.peopleMeta = {
+          custom: Array.isArray(parsed?.custom) ? parsed.custom : [],
+          deleted: Array.isArray(parsed?.deleted) ? parsed.deleted : []
+        };
+        return this.peopleMeta;
+      }
+    } catch (e) { console.error('Błąd odczytu listy pracowników', e); }
+    this.peopleMeta = { custom: [], deleted: [] };
+    if (!CLOUD_ENABLED) {
+      this.savePeople();
+    }
+    return this.peopleMeta;
+  },
+
+  savePeople() {
+    if (!this.peopleMeta) return;
+    localStorage.setItem(this.PEOPLE_KEY, JSON.stringify(this.peopleMeta));
+    if (CLOUD_ENABLED && firebase.firestore && firebase.auth && firebase.auth().currentUser) {
+      this.col().doc('_people').set(JSON.parse(JSON.stringify(this.peopleMeta)))
+        .catch((err) => console.error('Błąd zapisu listy pracowników w chmurze', err));
+    }
+  },
+
+  /** Zwraca posortowaną listę aktywnych pracowników (z historii + dodani ręcznie, z pominięciem usuniętych). */
+  getPeople() {
+    if (!this.peopleMeta) this.loadPeople();
+    const deletedLower = new Set(
+      (this.peopleMeta.deleted || []).map(p => String(p).trim().toLowerCase()).filter(Boolean)
+    );
+    const map = new Map(); // lower -> original
+
+    (this.peopleMeta.custom || []).forEach(p => {
+      const trimmed = String(p || '').trim();
+      if (!trimmed) return;
+      const lower = trimmed.toLowerCase();
+      if (!deletedLower.has(lower)) {
+        map.set(lower, trimmed);
+      }
+    });
+
+    Object.values(this.data || {}).forEach(d => {
+      (d.jobs || []).forEach(j => {
+        (j.people || []).forEach(p => {
+          const trimmed = (p.name || '').trim();
+          if (!trimmed) return;
+          const lower = trimmed.toLowerCase();
+          if (!deletedLower.has(lower) && !map.has(lower)) {
+            map.set(lower, trimmed);
+          }
+        });
+      });
+    });
+
+    return [...map.values()].sort((a, b) => a.localeCompare(b, 'pl'));
+  },
+
+  /** Dodaje pracownika do listy (i przywraca, jeśli był wcześniej usunięty). */
+  ensurePerson(name) {
+    const trimmed = String(name || '').trim();
+    if (!trimmed) return false;
+    if (!this.peopleMeta) this.loadPeople();
+    const lower = trimmed.toLowerCase();
+
+    let changed = false;
+    const prevDelLen = this.peopleMeta.deleted.length;
+    this.peopleMeta.deleted = this.peopleMeta.deleted.filter(
+      p => String(p).trim().toLowerCase() !== lower
+    );
+    if (this.peopleMeta.deleted.length !== prevDelLen) changed = true;
+
+    const existingIdx = this.peopleMeta.custom.findIndex(
+      p => String(p).trim().toLowerCase() === lower
+    );
+    if (existingIdx === -1) {
+      this.peopleMeta.custom.push(trimmed);
+      changed = true;
+    } else if (this.peopleMeta.custom[existingIdx] !== trimmed) {
+      this.peopleMeta.custom[existingIdx] = trimmed;
+      changed = true;
+    }
+
+    if (changed) this.savePeople();
+    return true;
+  },
+
+  /** Usuwa pracownika z listy podpowiedzi (ukrywa go także jeśli występował w starszych wpisach). */
+  deletePerson(name) {
+    const trimmed = String(name || '').trim();
+    if (!trimmed) return false;
+    if (!this.peopleMeta) this.loadPeople();
+    const lower = trimmed.toLowerCase();
+
+    this.peopleMeta.custom = this.peopleMeta.custom.filter(
+      p => String(p).trim().toLowerCase() !== lower
+    );
+    const alreadyDeleted = this.peopleMeta.deleted.some(
+      p => String(p).trim().toLowerCase() === lower
+    );
+    if (!alreadyDeleted) {
+      this.peopleMeta.deleted.push(trimmed);
+    }
+    this.savePeople();
+    return true;
+  },
+
+  /** Zmienia imię/nazwisko pracownika na liście oraz aktualizuje istniejące wpisy z tą osobą. */
+  renamePerson(oldName, newName) {
+    const oldTrim = String(oldName || '').trim();
+    const newTrim = String(newName || '').trim();
+    if (!oldTrim || !newTrim) return false;
+    if (!this.peopleMeta) this.loadPeople();
+
+    const oldLower = oldTrim.toLowerCase();
+    const newLower = newTrim.toLowerCase();
+
+    this.peopleMeta.custom = this.peopleMeta.custom.filter(
+      p => String(p).trim().toLowerCase() !== oldLower && String(p).trim().toLowerCase() !== newLower
+    );
+    this.peopleMeta.custom.push(newTrim);
+
+    this.peopleMeta.deleted = this.peopleMeta.deleted.filter(
+      p => String(p).trim().toLowerCase() !== newLower
+    );
+    if (oldLower !== newLower) {
+      const alreadyDel = this.peopleMeta.deleted.some(p => String(p).trim().toLowerCase() === oldLower);
+      if (!alreadyDel) this.peopleMeta.deleted.push(oldTrim);
+    }
+
+    // Zaktualizuj również istniejące wpisy, które miały przypisanego tego pracownika
+    Object.keys(this.data || {}).forEach(date => {
+      const day = this.get(date);
+      if (!day || !Array.isArray(day.jobs)) return;
+      let dayChanged = false;
+      day.jobs.forEach(job => {
+        (job.people || []).forEach(person => {
+          if ((person.name || '').trim().toLowerCase() === oldLower) {
+            person.name = newTrim;
+            dayChanged = true;
+          }
+        });
+      });
+      if (dayChanged) {
+        this.set(date, day);
+      }
+    });
+
+    this.savePeople();
+    return true;
+  },
+
   /* ---------- Przypomnienia kalendarza miesięcznego ---------- */
   loadCalendar() {
     try {
@@ -603,7 +777,9 @@ const Store = {
     if (!date || !name || !from || !to) return false;
     const day = this.get(date);
     const projName = (project || '').trim() || 'Prace ogólne';
+    const empName = name.trim();
     this.ensureProject(projName);
+    this.ensurePerson(empName);
 
     // Znajdź istniejącą pracę z tym projektem lub stwórz nową
     let job = day.jobs.find(j => (j.place || '').toLowerCase() === projName.toLowerCase());
@@ -621,7 +797,7 @@ const Store = {
     }
 
     job.people.push({
-      name: name.trim(),
+      name: empName,
       from: from,
       to: to,
       realFrom: from,
@@ -638,6 +814,7 @@ const Store = {
       days: this.data,
       reminders: this.reminders || this.loadReminders(),
       projectsMeta: this.projectsMeta || this.loadProjects(),
+      peopleMeta: this.peopleMeta || this.loadPeople(),
       calendarNotes: this.calendarNotes || this.loadCalendar(),
       quoteForms: this.quoteForms || this.loadQuoteForms()
     }, null, 2);
@@ -658,6 +835,13 @@ const Store = {
           deleted: Array.isArray(parsed.projectsMeta.deleted) ? parsed.projectsMeta.deleted : []
         };
         this.saveProjects();
+      }
+      if (parsed.peopleMeta) {
+        this.peopleMeta = {
+          custom: Array.isArray(parsed.peopleMeta.custom) ? parsed.peopleMeta.custom : [],
+          deleted: Array.isArray(parsed.peopleMeta.deleted) ? parsed.peopleMeta.deleted : []
+        };
+        this.savePeople();
       }
       if (parsed.calendarNotes && typeof parsed.calendarNotes === 'object') {
         this.calendarNotes = {

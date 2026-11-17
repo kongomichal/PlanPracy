@@ -304,8 +304,10 @@ const DayEditor = {
   },
 
   refreshNameSuggestions() {
-    const names = new Set();
-    Object.values(Store.data).forEach(d => d.jobs.forEach(j => j.people.forEach(p => names.add(p.name))));
-    $('peopleNames').innerHTML = [...names].map(n => `<option value="${esc(n)}">`).join('');
+    const names = Store.getPeople();
+    const dl = $('peopleNames');
+    if (dl) {
+      dl.innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
+    }
   }
 };

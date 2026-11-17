@@ -525,80 +525,15 @@ const Hours = {
     }
   },
 
-  /* ---------- Renderowanie kart podsumowania wg projektów ---------- */
-  renderSummaryCards() {
-    const people = this.collect();
-    const names = this.sortedNames(people);
-    const box = $('hoursList');
-    if (!box) return;
-
-    if (!names.length) {
-      box.innerHTML = '<div class="empty-state">Brak wprowadzonych godzin. Dodaj godziny w formularzu powyżej. 👍</div>';
-      return;
-    }
-
-    box.innerHTML = names.map(name => {
-      const person = people[name];
-      return `
-        <section class="h-person">
-          <div class="h-person-head"><span>${esc(name)}</span><span>${fmtHours(person.total)}</span></div>
-          ${Object.keys(person.projects).sort((a, b) => a.localeCompare(b, 'pl')).map(pn => {
-            const proj = person.projects[pn];
-            return `
-              <div class="h-project"><span>${esc(pn)}</span><span>${fmtHours(proj.total)}</span></div>
-              ${proj.lines.map(l => {
-                const time = this.timeRange(l);
-                return `
-                <div class="h-line">
-                  <span class="h-line-desc">
-                    <strong class="h-line-date">${this.lineLabel(l)}</strong>
-                    ${l.note ? ' · <span class="h-note">' + esc(l.note) + '</span>' : ''}
-                    ${l.real ? '' : '<span class="h-plan">plan</span>'}
-                  </span>
-                  <div class="h-line-right">
-                    <div class="h-line-hours-box">
-                      ${time ? `<span class="h-line-time ${l.real ? '' : 'plan'}" title="${l.real ? 'Rzeczywiste godziny pracy' : 'Zaplanowane godziny'}: ${time} (suma: ${fmtHours(l.hours)})">${time}</span>` : ''}
-                      <span class="h-line-val">${fmtHours(l.hours)}</span>
-                    </div>
-                    <div class="h-line-actions">
-                      <button type="button" class="btn small icon h-btn" data-edit-hours="${l.key}" data-job="${l.jobIndex}" data-person="${l.personIndex}" title="Edytuj te godziny">✏️</button>
-                      <button type="button" class="btn small icon danger h-btn" data-delete-hours="${l.key}" data-job="${l.jobIndex}" data-person="${l.personIndex}" title="Usuń te godziny">🗑️</button>
-                    </div>
-                  </div>
-                </div>`;
-              }).join('')}`;
-          }).join('')}
-        </section>`;
-    }).join('');
-  },
-
   render() {
     this.refreshProjectSuggestions();
     this.refreshEmployeeSuggestions();
     this.populateFilters();
     this.renderTable();
-    this.renderSummaryCards();
 
     const totalEl = $('hoursTotalSumBadge');
     if (totalEl) {
       totalEl.textContent = fmtHours(this.totalSum());
-    }
-  },
-
-  switchView(v) {
-    this.activeView = v;
-    if (v === 'register') {
-      $('rbhTabRegister')?.classList.add('active');
-      $('rbhTabSummary')?.classList.remove('active');
-      if ($('rbhRegisterView')) $('rbhRegisterView').style.display = 'block';
-      if ($('rbhSummaryView')) $('rbhSummaryView').style.display = 'none';
-      this.renderTable();
-    } else {
-      $('rbhTabSummary')?.classList.add('active');
-      $('rbhTabRegister')?.classList.remove('active');
-      if ($('rbhRegisterView')) $('rbhRegisterView').style.display = 'none';
-      if ($('rbhSummaryView')) $('rbhSummaryView').style.display = 'block';
-      this.renderSummaryCards();
     }
   },
 
@@ -938,25 +873,11 @@ const Hours = {
   },
 
   init() {
-    // 1. Kopiowanie tekstu
-    $('copyHoursBtn')?.addEventListener('click', () => this.copyText());
-
-    // 2. Pobieranie bazy JSON dla Panelu Muraven
+    // 1. Pobieranie bazy JSON dla Panelu Muraven
     $('downloadRbhPackageBtn')?.addEventListener('click', () => this.downloadPanelMuravenJson());
     $('menuDownloadRbhBtn')?.addEventListener('click', () => this.downloadPanelMuravenJson());
 
-    // 3. Scalanie z plikiem Panelu
-    $('mergeRbhInput')?.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) this.handleMergeFile(file);
-      e.target.value = '';
-    });
-
-    // 4. Przełącznik widoków (Tabela RBH vs Podsumowanie)
-    $('rbhTabRegister')?.addEventListener('click', () => this.switchView('register'));
-    $('rbhTabSummary')?.addEventListener('click', () => this.switchView('summary'));
-
-    // 5. Zmiana filtrów tabeli
+    // 2. Zmiana filtrów tabeli
     $('filterMainYear')?.addEventListener('change', () => this.renderTable());
     $('filterMainMonth')?.addEventListener('change', () => this.renderTable());
     $('filterMainEmployee')?.addEventListener('change', () => this.renderTable());

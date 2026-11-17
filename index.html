@@ -14,15 +14,15 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Muraven – prosty plan pracy, rejestracja godzin i przypomnienia.">
   <title>Muraven – Plan pracy</title>
-  <link rel="stylesheet" href="css/base.css?v=26">
-  <link rel="stylesheet" href="css/layout.css?v=26">
-  <link rel="stylesheet" href="css/components.css?v=26">
-  <link rel="stylesheet" href="css/modals.css?v=26">
-  <link rel="stylesheet" href="css/jobs.css?v=26">
-  <link rel="stylesheet" href="css/dashboard.css?v=26">
-  <link rel="stylesheet" href="css/reminders.css?v=26">
-  <link rel="stylesheet" href="css/hours.css?v=26">
-  <link rel="stylesheet" href="css/quote.css?v=26">
+  <link rel="stylesheet" href="css/base.css?v=27">
+  <link rel="stylesheet" href="css/layout.css?v=27">
+  <link rel="stylesheet" href="css/components.css?v=27">
+  <link rel="stylesheet" href="css/modals.css?v=27">
+  <link rel="stylesheet" href="css/jobs.css?v=27">
+  <link rel="stylesheet" href="css/dashboard.css?v=27">
+  <link rel="stylesheet" href="css/reminders.css?v=27">
+  <link rel="stylesheet" href="css/hours.css?v=27">
+  <link rel="stylesheet" href="css/quote.css?v=27">
 </head>
 <body>
 
@@ -257,30 +257,19 @@
           </div>
         </div>
 
-        <!-- Pasek akcji pobierania danych i schowka -->
+        <!-- Pasek akcji pobierania danych JSON -->
         <div class="hours-actions-bar">
           <div class="hours-actions-left">
             <button type="button" id="downloadRbhPackageBtn" class="btn success-btn" title="Pobierz gotowy plik bazy danych JSON dla Panelu Muraven">
               💾 Pobierz dane do Panelu Muraven (JSON)
             </button>
-            <label class="btn outline-btn" title="Wczytaj swój plik bazy z Panelu Muraven i zaktualizuj go o nowe wpisy RBH">
-              🔄 Scal z plikiem Panelu
-              <input type="file" id="mergeRbhInput" accept=".json" hidden>
-            </label>
-            <button type="button" id="copyHoursBtn" class="btn">📋 Kopiuj jako tekst</button>
           </div>
           <div class="hours-actions-right">
             <span class="hours-total-badge">Suma: <span id="hoursTotalSumBadge">0 h</span></span>
           </div>
         </div>
 
-        <!-- Przełącznik widoków (Rejestr RBH / Podsumowanie) -->
-        <div class="rbh-tabs-bar">
-          <button type="button" class="rbh-tab-btn active" id="rbhTabRegister">⏱️ Rejestr Godzin (Tabela)</button>
-          <button type="button" class="rbh-tab-btn" id="rbhTabSummary">📊 Podsumowanie wg projektów</button>
-        </div>
-
-        <!-- WIDOK 1: REJESTR GODZIN (TABELA RBH DOKŁADNIE JAK W PANELU) -->
+        <!-- REJESTR GODZIN (TABELA RBH DOKŁADNIE JAK W PANELU) -->
         <div id="rbhRegisterView" class="rbh-view-block">
           <div class="payout-filter-bar">
             <div class="payout-filter-group">
@@ -339,11 +328,6 @@
               </tbody>
             </table>
           </div>
-        </div>
-
-        <!-- WIDOK 2: PODSUMOWANIE PROJEKTOWE (KARTY) -->
-        <div id="rbhSummaryView" class="rbh-view-block" style="display: none;">
-          <div id="hoursList"></div>
         </div>
 
         <!-- Sekcja usuwania wszystkich godzin na samym dole strony -->
@@ -940,21 +924,21 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=26"></script>
-  <script src="js/core/utils.js?v=26"></script>
-  <script src="js/core/sample-data.js?v=26"></script>
-  <script src="js/core/storage.js?v=26"></script>
-  <script src="js/features/auth.js?v=26"></script>
-  <script src="js/features/plan.js?v=26"></script>
-  <script src="js/features/calendar.js?v=26"></script>
-  <script src="js/features/day-editor.js?v=26"></script>
-  <script src="js/features/items.js?v=26"></script>
-  <script src="js/features/people.js?v=26"></script>
-  <script src="js/features/hours.js?v=26"></script>
-  <script src="js/features/reminders.js?v=26"></script>
-  <script src="js/features/quote-form.js?v=26"></script>
-  <script src="js/features/job-view.js?v=26"></script>
-  <script src="js/features/menu.js?v=26"></script>
-  <script src="js/main.js?v=26"></script>
+  <script src="js/core/firebase-config.js?v=27"></script>
+  <script src="js/core/utils.js?v=27"></script>
+  <script src="js/core/sample-data.js?v=27"></script>
+  <script src="js/core/storage.js?v=27"></script>
+  <script src="js/features/auth.js?v=27"></script>
+  <script src="js/features/plan.js?v=27"></script>
+  <script src="js/features/calendar.js?v=27"></script>
+  <script src="js/features/day-editor.js?v=27"></script>
+  <script src="js/features/items.js?v=27"></script>
+  <script src="js/features/people.js?v=27"></script>
+  <script src="js/features/hours.js?v=27"></script>
+  <script src="js/features/reminders.js?v=27"></script>
+  <script src="js/features/quote-form.js?v=27"></script>
+  <script src="js/features/job-view.js?v=27"></script>
+  <script src="js/features/menu.js?v=27"></script>
+  <script src="js/main.js?v=27"></script>
 </body>
 </html>

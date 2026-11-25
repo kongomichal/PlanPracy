@@ -14,15 +14,15 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Muraven – prosty plan pracy, rejestracja godzin i przypomnienia.">
   <title>Muraven – Plan pracy</title>
-  <link rel="stylesheet" href="css/base.css?v=27">
-  <link rel="stylesheet" href="css/layout.css?v=27">
-  <link rel="stylesheet" href="css/components.css?v=27">
-  <link rel="stylesheet" href="css/modals.css?v=27">
-  <link rel="stylesheet" href="css/jobs.css?v=27">
-  <link rel="stylesheet" href="css/dashboard.css?v=27">
-  <link rel="stylesheet" href="css/reminders.css?v=27">
-  <link rel="stylesheet" href="css/hours.css?v=27">
-  <link rel="stylesheet" href="css/quote.css?v=27">
+  <link rel="stylesheet" href="css/base.css?v=28">
+  <link rel="stylesheet" href="css/layout.css?v=28">
+  <link rel="stylesheet" href="css/components.css?v=28">
+  <link rel="stylesheet" href="css/modals.css?v=28">
+  <link rel="stylesheet" href="css/jobs.css?v=28">
+  <link rel="stylesheet" href="css/dashboard.css?v=28">
+  <link rel="stylesheet" href="css/reminders.css?v=28">
+  <link rel="stylesheet" href="css/hours.css?v=28">
+  <link rel="stylesheet" href="css/quote.css?v=28">
 </head>
 <body>
 
@@ -109,22 +109,34 @@
           </div>
         </div>
 
-        <!-- KALENDARZ MIESIĘCZNY (PONIEDZIAŁEK – NIEDZIELA) Z MOŻLIWOŚCIĄ ZWIJANIA / ROZWIJANIA -->
+        <!-- PLAN TYGODNIA I KALENDARZ MIESIĘCZNY (PONIEDZIAŁEK – NIEDZIELA) -->
         <div class="dash-calendar-card" id="dashCalendarCard">
           <div class="cal-toolbar">
-            <div class="cal-title-wrap" id="calTitleWrap" title="Kliknij, aby zwinąć lub rozwinąć kalendarz">
-              <span class="cal-title-icon">📅</span>
-              <h3 id="calMonthTitle" class="cal-month-title">Miesiąc</h3>
-              <button type="button" class="btn small success-btn cal-complete-past-btn" id="calCompletePastBtn" title="Odkliknij wszystkie minione dni w tym miesiącu i przenieś je do archiwum" hidden>
-                ✓ Odkliknij minione dni (<span id="calPastDaysCount">0</span>)
+            <div class="cal-toolbar-left">
+              <div class="cal-mode-switch" id="calModeSwitch">
+                <button type="button" class="cal-mode-btn active" data-cal-mode="week">📅 Plan Tygodnia</button>
+                <button type="button" class="cal-mode-btn" data-cal-mode="month">🗓️ Miesiąc</button>
+              </div>
+              <div class="cal-title-wrap" id="calTitleWrap" title="Kliknij, aby zwinąć lub rozwinąć kalendarz">
+                <h3 id="calMonthTitle" class="cal-month-title">Tydzień</h3>
+              </div>
+              <button type="button" class="btn small success-btn cal-complete-past-btn" id="calCompletePastBtn" title="Odkliknij wszystkie minione dni w bieżącym widoku i przenieś je do archiwum" hidden>
+                ✓ Odkliknij minione (<span id="calPastDaysCount">0</span>)
               </button>
             </div>
             <div class="cal-nav-btns">
-              <button type="button" class="btn cal-nav-btn" id="calPrevMonthBtn" title="Poprzedni miesiąc">← Poprzedni</button>
-              <button type="button" class="btn cal-today-btn" id="calTodayBtn" title="Wróć do bieżącego miesiąca">Dziś</button>
-              <button type="button" class="btn cal-nav-btn" id="calNextMonthBtn" title="Następny miesiąc">Następny →</button>
+              <label class="btn cal-sync-btn" title="Wczytaj plik projektów i zadań wyeksportowany z Panelu Muraven">
+                📥 Wczytaj z Panelu
+                <input type="file" id="calImportPanelInput" accept=".json" hidden>
+              </label>
+              <button type="button" class="btn success-btn cal-sync-btn" id="calExportPanelBtn" title="Pobierz plik JSON (Godziny RBH + Plan Tygodnia i postęp zadań) do wczytania w Panelu Muraven">
+                💾 Eksport do Panelu
+              </button>
+              <button type="button" class="btn cal-nav-btn" id="calPrevMonthBtn" title="Poprzedni okres">← Poprzedni</button>
+              <button type="button" class="btn cal-today-btn" id="calTodayBtn" title="Wróć do bieżącego tygodnia / miesiąca">Dziś</button>
+              <button type="button" class="btn cal-nav-btn" id="calNextMonthBtn" title="Następny okres">Następny →</button>
               <button type="button" class="btn cal-toggle-btn" id="calToggleBtn" title="Zwiń lub rozwiń widok kalendarza">
-                <span id="calToggleIcon">▾</span> <span id="calToggleText">Zwiń kalendarz</span>
+                <span id="calToggleIcon">▾</span> <span id="calToggleText">Zwiń</span>
               </button>
             </div>
           </div>
@@ -918,27 +930,122 @@
     </div>
   </div>
 
+  <!-- ============ MODAL: ZAPLANUJ PROJEKT I ZADANIA NA DZIEŃ ============ -->
+  <div id="planDayBlockModal" class="modal">
+    <div class="modal-box plan-block-modal-box">
+      <div class="modal-head">
+        <h2 id="pdbModalTitle">📅 Zaplanuj pracę na dzień</h2>
+        <button class="btn icon" data-close aria-label="Zamknij">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="pdbDateKey">
+
+        <section class="block">
+          <h3>1. Projekt (Budowa)</h3>
+          <div class="pdb-proj-row">
+            <select id="pdbProjectSelect" class="pdb-select"></select>
+            <button type="button" class="btn small" id="pdbToggleNewProjBtn">+ Nowy projekt</button>
+          </div>
+          <div id="pdbNewProjRow" class="pdb-new-proj-row" hidden>
+            <input type="text" id="pdbNewProjInput" placeholder="Wpisz nazwę nowej budowy..." autocomplete="off">
+            <button type="button" class="btn small primary" id="pdbSaveNewProjBtn">Dodaj</button>
+          </div>
+          <div id="pdbProjProgressBanner" class="pdb-proj-banner"></div>
+        </section>
+
+        <section class="block">
+          <h3>2. Zadania z tego projektu na ten dzień</h3>
+          <p class="muted small" style="margin-bottom:8px;">Zaznacz co robicie tego dnia (waga liczona automatycznie z szacowanych godzin RBH):</p>
+          <div id="pdbTasksList" class="pdb-tasks-list"></div>
+
+          <div class="pdb-add-task-box">
+            <div class="pdb-add-task-label">+ Dopisz pomniejsze zadanie do tego projektu:</div>
+            <div class="pdb-add-task-inputs">
+              <input type="text" id="pdbNewTaskName" placeholder="np. Układanie gresu / Montaż obrzeży..." autocomplete="off">
+              <input type="number" id="pdbNewTaskRbh" min="0.5" step="0.5" value="8" title="Szacowane RBH">
+              <button type="button" class="btn small primary" id="pdbAddTaskBtn">Dodaj</button>
+            </div>
+            <div class="pdb-presets">
+              <span>Szybki czas:</span>
+              <button type="button" class="pdb-preset-btn" data-rbh-preset="4">4h (0.5 dnia)</button>
+              <button type="button" class="pdb-preset-btn" data-rbh-preset="8">8h (1 dniówka)</button>
+              <button type="button" class="pdb-preset-btn" data-rbh-preset="16">16h (2 dni)</button>
+              <button type="button" class="pdb-preset-btn" data-rbh-preset="24">24h (3 dni)</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="block">
+          <h3>3. Kto jedzie? (opcjonalnie)</h3>
+          <div id="pdbCrewList" class="pdb-crew-list"></div>
+        </section>
+
+        <section class="block">
+          <h3>4. Szybkie luźne przypomnienie na ten dzień (opcjonalnie)</h3>
+          <input type="text" id="pdbReminderInput" placeholder="np. Odebrać klej z hurtowni / zadzwonić do inwestora" autocomplete="off">
+        </section>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn" data-close>Anuluj</button>
+        <button type="button" class="btn primary" id="pdbConfirmSaveBtn">✓ Zapisz w dniu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: PRZESUŃ PROJEKT / OBSUWA NA BUDOWIE (EFEKT DOMINA) ============ -->
+  <div id="shiftProjectModal" class="modal">
+    <div class="modal-box small-box">
+      <div class="modal-head">
+        <h2>⏩ Przesuń prace na budowie</h2>
+        <button class="btn icon" data-close aria-label="Zamknij">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="shiftModalDesc" class="muted" style="margin-bottom: 12px; font-weight: 600; color: #0f172a;"></p>
+
+        <section class="block">
+          <h3>Opcja A: Przesuń ten i kolejne dni tego projektu (efekt domina)</h3>
+          <p class="muted small" style="margin-bottom: 8px;">Gdy np. koparka lub pogoda opóźnia budowę — cały łańcuch zaplanowanych dni tego projektu przesunie się automatycznie:</p>
+          <label class="check small" style="margin-bottom: 10px;">
+            <input type="checkbox" id="shiftSkipSaturday" checked> Pomijaj cały weekend (Sobotę i Niedzielę)
+          </label>
+          <div class="pdb-shift-btns">
+            <button type="button" class="btn primary" id="shiftChainPlus1Btn">⏩ Przesuń projekt o +1 dzień roboczy</button>
+            <button type="button" class="btn" id="shiftChainPlus2Btn">⏩ Przesuń projekt o +2 dni robocze</button>
+          </div>
+        </section>
+
+        <section class="block">
+          <h3>Opcja B: Przełóż tylko ten jeden dzień na inną datę</h3>
+          <div class="row" style="gap: 8px; margin-top: 6px;">
+            <input type="date" id="shiftSingleTargetDate" style="flex: 1;">
+            <button type="button" class="btn success-btn" id="shiftSingleConfirmBtn">Przenieś tylko ten dzień</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
   <div id="toasts" class="toasts"></div>
 
   <!-- Skrypty: kolejność ma znaczenie -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="js/core/firebase-config.js?v=27"></script>
-  <script src="js/core/utils.js?v=27"></script>
-  <script src="js/core/sample-data.js?v=27"></script>
-  <script src="js/core/storage.js?v=27"></script>
-  <script src="js/features/auth.js?v=27"></script>
-  <script src="js/features/plan.js?v=27"></script>
-  <script src="js/features/calendar.js?v=27"></script>
-  <script src="js/features/day-editor.js?v=27"></script>
-  <script src="js/features/items.js?v=27"></script>
-  <script src="js/features/people.js?v=27"></script>
-  <script src="js/features/hours.js?v=27"></script>
-  <script src="js/features/reminders.js?v=27"></script>
-  <script src="js/features/quote-form.js?v=27"></script>
-  <script src="js/features/job-view.js?v=27"></script>
-  <script src="js/features/menu.js?v=27"></script>
-  <script src="js/main.js?v=27"></script>
+  <script src="js/core/firebase-config.js?v=28"></script>
+  <script src="js/core/utils.js?v=28"></script>
+  <script src="js/core/sample-data.js?v=28"></script>
+  <script src="js/core/storage.js?v=28"></script>
+  <script src="js/features/auth.js?v=28"></script>
+  <script src="js/features/plan.js?v=28"></script>
+  <script src="js/features/calendar.js?v=28"></script>
+  <script src="js/features/day-editor.js?v=28"></script>
+  <script src="js/features/items.js?v=28"></script>
+  <script src="js/features/people.js?v=28"></script>
+  <script src="js/features/hours.js?v=28"></script>
+  <script src="js/features/reminders.js?v=28"></script>
+  <script src="js/features/quote-form.js?v=28"></script>
+  <script src="js/features/job-view.js?v=28"></script>
+  <script src="js/features/menu.js?v=28"></script>
+  <script src="js/main.js?v=28"></script>
 </body>
 </html>

@@ -829,3 +829,489 @@
     min-height: 76px;
   }
 }
+
+
+/* ============ PLAN TYGODNIA, BLOKI PROJEKTOWE I PRZESUWANIE DNI ============ */
+.cal-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cal-mode-switch {
+  display: inline-flex;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.cal-mode-btn {
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cal-mode-btn:hover {
+  color: #0f172a;
+}
+
+.cal-mode-btn.active {
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+}
+
+.cal-sync-btn {
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  padding: 6px 11px !important;
+  cursor: pointer;
+}
+
+/* Siatka dla Planu Tygodnia (czytelne 2 kolumny na komputerze, 1 kolumna na telefonie) */
+.cal-grid.week-mode {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 16px;
+  background: #f8fafc;
+}
+
+.cal-grid.week-mode .cal-day {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 13px 14px;
+  background: #ffffff;
+  min-height: 125px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+}
+
+.cal-grid.week-mode .cal-day.today {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.cal-grid.week-mode .cal-day.weekend {
+  background: #fcfcfd;
+  border-style: dashed;
+}
+
+.cal-plan-day-btn {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cal-plan-day-btn:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+/* Blok Projektu w kafelku dnia */
+.cal-proj-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cal-proj-block {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-left: 4px solid #2563eb;
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+
+.cal-proj-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cal-proj-title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cal-proj-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.cal-proj-prog-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1e40af;
+  white-space: nowrap;
+}
+
+.cal-proj-prog-pill.done {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.cal-proj-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cal-proj-act-btn {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.cal-proj-act-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.cal-proj-act-btn.shift {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4338ca;
+}
+
+.cal-proj-act-btn.shift:hover {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #fff;
+}
+
+.cal-proj-act-btn.del:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.cal-proj-crew {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: #475569;
+}
+
+.cal-crew-chip {
+  background: #e2e8f0;
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 5px;
+}
+
+/* Wiersze zadań wewnątrz bloku projektu (1-klik: 0% -> 50% -> 100%) */
+.cal-proj-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.cal-proj-task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 9px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.12s ease;
+}
+
+.cal-proj-task:hover {
+  border-color: #93c5fd;
+}
+
+.cal-proj-task.st-half {
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+
+.cal-proj-task.st-done {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.cal-proj-task-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
+}
+
+.cal-proj-task-rbh {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+  margin-left: 4px;
+}
+
+.cal-task-status-pill {
+  min-width: 68px;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.cal-proj-task.st-half .cal-task-status-pill {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #b45309;
+}
+
+.cal-proj-task.st-done .cal-task-status-pill {
+  background: #16a34a;
+  border-color: #15803d;
+  color: #ffffff;
+}
+
+.cal-empty-day-hint {
+  font-size: 12.5px;
+  color: #94a3b8;
+  padding: 8px 2px 2px;
+  font-style: italic;
+}
+
+/* Kompaktowa plakietka projektu w widoku miesięcznym */
+.cal-month-proj-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 7px;
+  margin-top: 4px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-left: 3px solid #2563eb;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e3a8a;
+  cursor: pointer;
+}
+
+/* Modal planowania bloku dnia */
+.plan-block-modal-box {
+  max-width: 560px;
+  width: 100%;
+}
+
+.pdb-proj-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.pdb-select {
+  flex: 1;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  background: #fff;
+  color: #0f172a;
+}
+
+.pdb-new-proj-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pdb-new-proj-row input {
+  flex: 1;
+}
+
+.pdb-proj-banner {
+  margin-top: 8px;
+  padding: 8px 11px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.pdb-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+
+.pdb-task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.pdb-task-item label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  cursor: pointer;
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.pdb-task-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.pdb-add-task-box {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.pdb-add-task-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.pdb-add-task-inputs {
+  display: flex;
+  gap: 6px;
+}
+
+.pdb-add-task-inputs input[type="text"] {
+  flex: 1;
+}
+
+.pdb-add-task-inputs input[type="number"] {
+  width: 78px;
+  text-align: center;
+}
+
+.pdb-presets {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 7px;
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.pdb-preset-btn {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pdb-preset-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.pdb-crew-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.pdb-crew-pill {
+  border: 1.5px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.pdb-crew-pill.selected {
+  background: #dbeafe;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.pdb-shift-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 860px) {
+  .cal-grid.week-mode {
+    grid-template-columns: 1fr;
+    padding: 10px;
+    gap: 10px;
+  }
+  .cal-nav-btns {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .cal-proj-task {
+    min-height: 44px;
+  }
+}

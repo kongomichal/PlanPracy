@@ -104,7 +104,9 @@ const Store = {
       if (cloudCalendar && typeof cloudCalendar === 'object') {
         this.calendarNotes = {
           byDate: (cloudCalendar.byDate && typeof cloudCalendar.byDate === 'object') ? cloudCalendar.byDate : {},
-          doneDays: (cloudCalendar.doneDays && typeof cloudCalendar.doneDays === 'object') ? cloudCalendar.doneDays : {}
+          doneDays: (cloudCalendar.doneDays && typeof cloudCalendar.doneDays === 'object') ? cloudCalendar.doneDays : {},
+          dayBlocks: (cloudCalendar.dayBlocks && typeof cloudCalendar.dayBlocks === 'object') ? cloudCalendar.dayBlocks : {},
+          projectTasks: (cloudCalendar.projectTasks && typeof cloudCalendar.projectTasks === 'object') ? cloudCalendar.projectTasks : {}
         };
         localStorage.setItem(this.CALENDAR_KEY, JSON.stringify(this.calendarNotes));
       } else if (!cloudCalendar && this.calendarNotes && firebase.auth && firebase.auth().currentUser) {
@@ -441,6 +443,35 @@ const Store = {
     });
 
     this.saveProjects();
+
+    // Zaktualizuj też nazwę projektu w zadaniach i blokach Planu Tygodnia
+    if (!this.calendarNotes) this.loadCalendar();
+    let calChanged = false;
+    if (this.calendarNotes.projectTasks) {
+      const oldMeta = this.calendarNotes.projectTasks[oldLower];
+      if (oldMeta) {
+        delete this.calendarNotes.projectTasks[oldLower];
+        this.calendarNotes.projectTasks[newLower] = {
+          ...oldMeta,
+          name: newTrim,
+          updatedAt: Date.now()
+        };
+        calChanged = true;
+      }
+    }
+    if (this.calendarNotes.dayBlocks) {
+      Object.values(this.calendarNotes.dayBlocks).forEach(blocks => {
+        if (!Array.isArray(blocks)) return;
+        blocks.forEach(b => {
+          if (String(b.projectName || '').trim().toLowerCase() === oldLower) {
+            b.projectName = newTrim;
+            calChanged = true;
+          }
+        });
+      });
+    }
+    if (calChanged) this.saveCalendar();
+
     return true;
   },
 
@@ -600,7 +631,7 @@ const Store = {
     return true;
   },
 
-  /* ---------- Przypomnienia kalendarza miesięcznego ---------- */
+  /* ---------- Przypomnienia i Plan Tygodnia kalendarza ---------- */
   loadCalendar() {
     try {
       const raw = localStorage.getItem(this.CALENDAR_KEY);
@@ -608,12 +639,14 @@ const Store = {
         const parsed = JSON.parse(raw);
         this.calendarNotes = {
           byDate: (parsed && typeof parsed.byDate === 'object' && parsed.byDate) ? parsed.byDate : {},
-          doneDays: (parsed && typeof parsed.doneDays === 'object' && parsed.doneDays) ? parsed.doneDays : {}
+          doneDays: (parsed && typeof parsed.doneDays === 'object' && parsed.doneDays) ? parsed.doneDays : {},
+          dayBlocks: (parsed && typeof parsed.dayBlocks === 'object' && parsed.dayBlocks) ? parsed.dayBlocks : {},
+          projectTasks: (parsed && typeof parsed.projectTasks === 'object' && parsed.projectTasks) ? parsed.projectTasks : {}
         };
         return this.calendarNotes;
       }
     } catch (e) { console.error('Błąd odczytu kalendarza', e); }
-    this.calendarNotes = { byDate: {}, doneDays: {} };
+    this.calendarNotes = { byDate: {}, doneDays: {}, dayBlocks: {}, projectTasks: {} };
     if (!CLOUD_ENABLED) {
       this.saveCalendar();
     }
@@ -723,6 +756,352 @@ const Store = {
     return true;
   },
 
+  /* ---------- Plan Tygodnia: Zadania Projektowe (RBH), Bloki Dni i Efekt Domina ---------- */
+  normProjKey(name) {
+    return String(name || '').trim().toLowerCase();
+  },
+
+  ensureCalendarShapes() {
+    if (!this.calendarNotes) this.loadCalendar();
+    if (!this.calendarNotes.byDate) this.calendarNotes.byDate = {};
+    if (!this.calendarNotes.doneDays) this.calendarNotes.doneDays = {};
+    if (!this.calendarNotes.dayBlocks) this.calendarNotes.dayBlocks = {};
+    if (!this.calendarNotes.projectTasks) this.calendarNotes.projectTasks = {};
+  },
+
+  getProjectMeta(projectName) {
+    this.ensureCalendarShapes();
+    const trimmed = String(projectName || '').trim();
+    if (!trimmed) return null;
+    const pKey = this.normProjKey(trimmed);
+    let meta = this.calendarNotes.projectTasks[pKey];
+    if (!meta) {
+      meta = {
+        name: trimmed,
+        poolRbh: 0,
+        budgetAfterMat: 0,
+        tasks: [],
+        updatedAt: 0
+      };
+      this.calendarNotes.projectTasks[pKey] = meta;
+    } else if (!Array.isArray(meta.tasks)) {
+      meta.tasks = [];
+    }
+    return meta;
+  },
+
+  getProjectStats(projectName) {
+    const meta = this.getProjectMeta(projectName);
+    if (!meta) {
+      return { totalTaskRbh: 0, doneTaskRbh: 0, scopePct: 0, remainingTaskRbh: 0, estDaysTwoPeople: 0, taskCount: 0, poolRbh: 0 };
+    }
+    const tasks = Array.isArray(meta.tasks) ? meta.tasks : [];
+    const totalTaskRbh = Math.round(tasks.reduce((s, t) => s + (parseFloat(t.rbh) || 0), 0) * 10) / 10;
+    const doneTaskRbh = Math.round(tasks.reduce((s, t) => {
+      const rbh = parseFloat(t.rbh) || 0;
+      const pct = Math.min(100, Math.max(0, Number(t.pct ?? (t.done ? 100 : 0)) || 0));
+      return s + (rbh * (pct / 100));
+    }, 0) * 10) / 10;
+    const baseTotal = totalTaskRbh > 0 ? totalTaskRbh : (parseFloat(meta.poolRbh) || 0);
+    const scopePct = totalTaskRbh > 0 ? Math.round((doneTaskRbh / totalTaskRbh) * 100) : 0;
+    const remainingTaskRbh = totalTaskRbh > 0
+      ? Math.max(0, Math.round((totalTaskRbh - doneTaskRbh) * 10) / 10)
+      : Math.max(0, Math.round((baseTotal) * 10) / 10);
+    const estDaysTwoPeople = remainingTaskRbh > 0 ? Math.ceil((remainingTaskRbh / 16) * 2) / 2 : 0;
+
+    return {
+      totalTaskRbh,
+      doneTaskRbh,
+      scopePct,
+      remainingTaskRbh,
+      estDaysTwoPeople,
+      taskCount: tasks.length,
+      poolRbh: parseFloat(meta.poolRbh) || 0
+    };
+  },
+
+  addProjectTask(projectName, taskName, rbh = 8) {
+    const projTrim = String(projectName || '').trim();
+    const taskTrim = String(taskName || '').trim();
+    if (!projTrim || !taskTrim) return null;
+    this.ensureProject(projTrim);
+    const meta = this.getProjectMeta(projTrim);
+    const numRbh = Math.max(0.5, Math.round((parseFloat(String(rbh).replace(',', '.')) || 8) * 10) / 10);
+    const task = {
+      id: 'pt-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      name: taskTrim,
+      rbh: numRbh,
+      pct: 0,
+      done: false
+    };
+    meta.tasks.push(task);
+    meta.updatedAt = Date.now();
+    this.saveCalendar();
+    return task;
+  },
+
+  cycleProjectTaskPct(projectName, taskId) {
+    const meta = this.getProjectMeta(projectName);
+    if (!meta) return null;
+    const task = meta.tasks.find(t => t.id === taskId);
+    if (!task) return null;
+    const cur = Number(task.pct ?? (task.done ? 100 : 0)) || 0;
+    const next = cur === 0 ? 50 : (cur < 100 ? 100 : 0);
+    task.pct = next;
+    task.done = next === 100;
+    meta.updatedAt = Date.now();
+    this.saveCalendar();
+    return task;
+  },
+
+  setProjectTaskPct(projectName, taskId, pct) {
+    const meta = this.getProjectMeta(projectName);
+    if (!meta) return null;
+    const task = meta.tasks.find(t => t.id === taskId);
+    if (!task) return null;
+    const clean = Math.min(100, Math.max(0, Math.round(Number(pct) || 0)));
+    task.pct = clean;
+    task.done = clean === 100;
+    meta.updatedAt = Date.now();
+    this.saveCalendar();
+    return task;
+  },
+
+  deleteProjectTask(projectName, taskId) {
+    const meta = this.getProjectMeta(projectName);
+    if (!meta) return false;
+    meta.tasks = meta.tasks.filter(t => t.id !== taskId);
+    meta.updatedAt = Date.now();
+    // Usuń referencję z bloków dni
+    const pKey = this.normProjKey(projectName);
+    Object.keys(this.calendarNotes.dayBlocks || {}).forEach(dk => {
+      const blocks = this.calendarNotes.dayBlocks[dk];
+      if (!Array.isArray(blocks)) return;
+      blocks.forEach(b => {
+        if (this.normProjKey(b.projectName) === pKey && Array.isArray(b.taskIds)) {
+          b.taskIds = b.taskIds.filter(id => id !== taskId);
+        }
+      });
+    });
+    this.saveCalendar();
+    return true;
+  },
+
+  getDayBlocks(key) {
+    this.ensureCalendarShapes();
+    const list = this.calendarNotes.dayBlocks[key];
+    return Array.isArray(list) ? list : [];
+  },
+
+  addDayBlock(key, { projectName, taskIds = [], crew = [], note = '' }) {
+    const projTrim = String(projectName || '').trim();
+    if (!key || !projTrim) return null;
+    this.ensureCalendarShapes();
+    this.ensureProject(projTrim);
+    (crew || []).forEach(c => { if (c) this.ensurePerson(c); });
+
+    if (!Array.isArray(this.calendarNotes.dayBlocks[key])) {
+      this.calendarNotes.dayBlocks[key] = [];
+    }
+    const pKey = this.normProjKey(projTrim);
+    const existing = this.calendarNotes.dayBlocks[key].find(
+      b => this.normProjKey(b.projectName) === pKey
+    );
+
+    if (existing) {
+      const mergedTasks = [...new Set([...(existing.taskIds || []), ...(taskIds || [])])];
+      const mergedCrew = [...new Set([...(existing.crew || []), ...(crew || [])])];
+      existing.taskIds = mergedTasks;
+      existing.crew = mergedCrew;
+      if (note && String(note).trim()) {
+        existing.note = existing.note ? `${existing.note} · ${String(note).trim()}` : String(note).trim();
+      }
+      this.saveCalendar();
+      return existing;
+    }
+
+    const block = {
+      id: 'blk-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      projectName: projTrim,
+      taskIds: [...new Set(taskIds || [])],
+      crew: [...new Set((crew || []).filter(Boolean))],
+      note: String(note || '').trim()
+    };
+    this.calendarNotes.dayBlocks[key].push(block);
+    this.saveCalendar();
+    return block;
+  },
+
+  deleteDayBlock(key, blockId) {
+    this.ensureCalendarShapes();
+    const list = this.calendarNotes.dayBlocks[key];
+    if (!Array.isArray(list)) return false;
+    this.calendarNotes.dayBlocks[key] = list.filter(b => b.id !== blockId);
+    if (this.calendarNotes.dayBlocks[key].length === 0) {
+      delete this.calendarNotes.dayBlocks[key];
+    }
+    this.saveCalendar();
+    return true;
+  },
+
+  /** Oblicza kolejną datę roboczą (+N dni), domyślnie pomijając niedziele (lub cały weekend). */
+  addWorkingDaysKey(startKey, deltaDays = 1, skipSundays = true, skipSaturdays = false) {
+    let cur = parseKey(startKey);
+    const step = deltaDays >= 0 ? 1 : -1;
+    let remaining = Math.abs(deltaDays);
+    while (remaining > 0) {
+      cur = addDays(cur, step);
+      const dow = cur.getDay(); // 0 = Nd, 6 = So
+      if (skipSundays && dow === 0) continue;
+      if (skipSaturdays && dow === 6) continue;
+      remaining--;
+    }
+    return dateKey(cur);
+  },
+
+  /** Przenosi pojedynczy blok projektu z jednego dnia na inny wskazany dzień. */
+  moveSingleDayBlock(fromKey, blockId, toKey) {
+    if (!fromKey || !toKey || fromKey === toKey) return false;
+    this.ensureCalendarShapes();
+    const fromList = this.calendarNotes.dayBlocks[fromKey];
+    if (!Array.isArray(fromList)) return false;
+    const idx = fromList.findIndex(b => b.id === blockId);
+    if (idx === -1) return false;
+    const [moved] = fromList.splice(idx, 1);
+    if (fromList.length === 0) delete this.calendarNotes.dayBlocks[fromKey];
+
+    this.addDayBlock(toKey, {
+      projectName: moved.projectName,
+      taskIds: moved.taskIds || [],
+      crew: moved.crew || [],
+      note: moved.note || ''
+    });
+    this.saveCalendar();
+    return true;
+  },
+
+  /** Efekt domina: przesuwa ten i wszystkie kolejne aktywne dni danego projektu o +N dni roboczych. */
+  shiftProjectChain(fromKey, projectName, workdaysDelta = 1, skipSundays = true, skipSaturdays = false) {
+    const pKey = this.normProjKey(projectName);
+    if (!fromKey || !pKey || !workdaysDelta) return 0;
+    this.ensureCalendarShapes();
+
+    // Zbierz wszystkie nieodklikane dni >= fromKey, w których występuje ten projekt
+    const affectedDates = Object.keys(this.calendarNotes.dayBlocks)
+      .filter(dk => dk >= fromKey && !this.isCalendarDayDone(dk))
+      .filter(dk => (this.calendarNotes.dayBlocks[dk] || []).some(b => this.normProjKey(b.projectName) === pKey))
+      .sort();
+
+    if (!affectedDates.length) return 0;
+
+    // Sortuj od najpóźniejszej daty przy przesuwaniu w przód (żeby dni nie nadpisały siebie nawzajem)
+    const ordered = workdaysDelta > 0 ? [...affectedDates].reverse() : affectedDates;
+    let shiftedCount = 0;
+
+    ordered.forEach(dk => {
+      const list = this.calendarNotes.dayBlocks[dk] || [];
+      const matching = list.filter(b => this.normProjKey(b.projectName) === pKey);
+      const others = list.filter(b => this.normProjKey(b.projectName) !== pKey);
+      if (!matching.length) return;
+
+      if (others.length) {
+        this.calendarNotes.dayBlocks[dk] = others;
+      } else {
+        delete this.calendarNotes.dayBlocks[dk];
+      }
+
+      const targetKey = this.addWorkingDaysKey(dk, workdaysDelta, skipSundays, skipSaturdays);
+      matching.forEach(m => {
+        this.addDayBlock(targetKey, {
+          projectName: m.projectName,
+          taskIds: m.taskIds || [],
+          crew: m.crew || [],
+          note: m.note || ''
+        });
+      });
+      shiftedCount++;
+    });
+
+    this.saveCalendar();
+    return shiftedCount;
+  },
+
+  /** Bezpieczny import projektów, zadań (stages) i pracowników z pliku wyeksportowanego z Panelu Muraven. */
+  importFromPanelMuraven(parsed) {
+    if (!parsed || typeof parsed !== 'object') throw new Error('Nieprawidłowy plik JSON');
+    this.ensureCalendarShapes();
+
+    const projectsArr = Array.isArray(parsed.projects) ? parsed.projects : [];
+    const personnelArr = Array.isArray(parsed.personnel) ? parsed.personnel : [];
+    let importedProjects = 0;
+    let importedTasks = 0;
+
+    personnelArr.forEach(emp => {
+      if (emp && String(emp).trim()) this.ensurePerson(String(emp).trim());
+    });
+
+    projectsArr.forEach(p => {
+      if (!p || !p.name || p.status === 'Zakończone') return;
+      const pName = String(p.name).trim();
+      if (!pName) return;
+
+      this.ensureProject(pName);
+      importedProjects++;
+
+      const pKey = this.normProjKey(pName);
+      const existingMeta = this.getProjectMeta(pName);
+
+      if (p.poolRbh !== undefined) existingMeta.poolRbh = parseFloat(p.poolRbh) || existingMeta.poolRbh || 0;
+      if (p.budgetAfterMat !== undefined) existingMeta.budgetAfterMat = parseFloat(p.budgetAfterMat) || 0;
+
+      // Zaimportuj etapy / zadania z Panelu (pomijając pojedynczy automatyczny placeholder "Całość prac projektowych")
+      if (Array.isArray(p.stages) && p.stages.length > 0) {
+        const realStages = p.stages.filter(s => s && s.name && !(p.stages.length === 1 && s.autoPool && s.name === 'Całość prac projektowych'));
+        if (realStages.length > 0) {
+          const existingById = new Map((existingMeta.tasks || []).map(t => [t.id, t]));
+          const existingByName = new Map((existingMeta.tasks || []).map(t => [String(t.name || '').trim().toLowerCase(), t]));
+
+          existingMeta.tasks = realStages.map((s, idx) => {
+            const sName = String(s.name).trim();
+            const prev = (s.id && existingById.get(s.id)) || existingByName.get(sName.toLowerCase());
+            const sRbh = Math.max(0.5, parseFloat(s.rbh || s.plannedRbh) || 8);
+            const panelPct = Math.min(100, Math.max(0, Number(s.pct ?? (s.done ? 100 : 0)) || 0));
+            const mergedPct = prev ? Math.max(Number(prev.pct) || 0, panelPct) : panelPct;
+            importedTasks++;
+            return {
+              id: s.id || prev?.id || `st-${pKey.replace(/[^a-z0-9]/g, '')}-${idx + 1}`,
+              name: sName,
+              rbh: sRbh,
+              pct: mergedPct,
+              done: mergedPct === 100
+            };
+          });
+          existingMeta.updatedAt = Date.now();
+        }
+      }
+
+      // Jeśli projekt z Panelu miał też zapisane dni kalendarza, dołącz brakujące
+      if (Array.isArray(p.calendarDays)) {
+        p.calendarDays.forEach(cd => {
+          if (!cd || !cd.date) return;
+          const curBlocks = this.getDayBlocks(cd.date);
+          const alreadyHas = curBlocks.some(b => this.normProjKey(b.projectName) === pKey);
+          if (!alreadyHas) {
+            this.addDayBlock(cd.date, {
+              projectName: pName,
+              taskIds: Array.isArray(cd.taskIds) ? cd.taskIds : [],
+              crew: Array.isArray(cd.crew) ? cd.crew : [],
+              note: cd.note || ''
+            });
+          }
+        });
+      }
+    });
+
+    this.saveCalendar();
+    return { importedProjects, importedTasks };
+  },
+
   /* ---------- Formularze Wyceny (Wizja lokalna / Ustalenia prac) ---------- */
   loadQuoteForms() {
     try {
@@ -743,10 +1122,6 @@ const Store = {
   saveQuoteForms() {
     if (!this.quoteForms) return;
     localStorage.setItem(this.QUOTE_FORMS_KEY, JSON.stringify(this.quoteForms));
-    if (CLOUD_ENABLED && firebase.firestore && firebase.auth && firebase.auth().currentUser) {
-      this.col().doc('_quote_forms').set({ items: JSON.parse(JSON.stringify(this.quoteForms)) })
-        .catch((err) => console.error('Błąd zapisu formularzy wycen w chmurze', err));
-    }
   },
 
   getQuoteForms() {
@@ -846,7 +1221,9 @@ const Store = {
       if (parsed.calendarNotes && typeof parsed.calendarNotes === 'object') {
         this.calendarNotes = {
           byDate: (parsed.calendarNotes.byDate && typeof parsed.calendarNotes.byDate === 'object') ? parsed.calendarNotes.byDate : {},
-          doneDays: (parsed.calendarNotes.doneDays && typeof parsed.calendarNotes.doneDays === 'object') ? parsed.calendarNotes.doneDays : {}
+          doneDays: (parsed.calendarNotes.doneDays && typeof parsed.calendarNotes.doneDays === 'object') ? parsed.calendarNotes.doneDays : {},
+          dayBlocks: (parsed.calendarNotes.dayBlocks && typeof parsed.calendarNotes.dayBlocks === 'object') ? parsed.calendarNotes.dayBlocks : {},
+          projectTasks: (parsed.calendarNotes.projectTasks && typeof parsed.calendarNotes.projectTasks === 'object') ? parsed.calendarNotes.projectTasks : {}
         };
         this.saveCalendar();
       }

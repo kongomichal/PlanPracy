@@ -594,6 +594,35 @@ const Hours = {
       });
     });
 
+    // Uwzględnij także bloki dni z Planu Tygodnia w harmonogramie i listach projektów/pracowników
+    Store.ensureCalendarShapes();
+    const dayBlocks = Store.calendarNotes?.dayBlocks || {};
+    Object.entries(dayBlocks).forEach(([dk, blocks]) => {
+      if (!Array.isArray(blocks) || !blocks.length) return;
+      if (dk && dk.length >= 4) yearsSet.add(dk.slice(0, 4));
+      blocks.forEach(b => {
+        const pName = String(b.projectName || '').trim();
+        if (pName) {
+          projectsSet.add(pName);
+          if (!schedule[dk]) schedule[dk] = ['', '', ''];
+          const emptySlot = schedule[dk].findIndex(s => !s);
+          if (emptySlot !== -1 && !schedule[dk].includes(pName)) {
+            schedule[dk][emptySlot] = pName;
+          }
+        }
+        (b.crew || []).forEach(c => {
+          if (c && String(c).trim()) personnelSet.add(String(c).trim());
+        });
+      });
+    });
+
+    const plannerSync = {
+      exportedAt: new Date().toISOString(),
+      projectTasks: JSON.parse(JSON.stringify(Store.calendarNotes?.projectTasks || {})),
+      dayBlocks: JSON.parse(JSON.stringify(Store.calendarNotes?.dayBlocks || {})),
+      doneDays: JSON.parse(JSON.stringify(Store.calendarNotes?.doneDays || {}))
+    };
+
     // Bezpieczne scalanie z istniejącym plikiem bazy Panelu Muraven (jeśli wgrany)
     if (baseDb && typeof baseDb === 'object') {
       const existingWorkLog = Array.isArray(baseDb.workLog) ? baseDb.workLog : [];
@@ -639,7 +668,8 @@ const Hours = {
         personnel: mergedPersonnel,
         projects: mergedProjects,
         schedule: { ...(baseDb.schedule || {}), ...schedule },
-        rbhYears: mergedRbhYears
+        rbhYears: mergedRbhYears,
+        plannerSync
       };
     }
 
@@ -675,7 +705,8 @@ const Hours = {
       portfolioYears: [],
       portfolioFolders: {},
       portfolioImages: [],
-      rbhYears
+      rbhYears,
+      plannerSync
     };
   },
 

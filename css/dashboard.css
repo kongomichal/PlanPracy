@@ -1315,3 +1315,237 @@
     min-height: 44px;
   }
 }
+
+
+/* ============ PASEK STANU GODZINOWEGO TRWAJĄCYCH PROJEKTÓW NAD KALENDARZEM (.ppool-*) ============ */
+.ppool-banner-card {
+  background: linear-gradient(180deg, #eff6ff 0%, #f4f8ff 100%);
+  border: 1.5px solid #93c5fd;
+  border-radius: 16px;
+  padding: 15px 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 3px 12px rgba(37, 99, 235, 0.06);
+}
+
+.ppool-banner-head {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.ppool-banner-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.ppool-banner-hint {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.ppool-head-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #ffffff;
+}
+.ppool-head-pill.blue { background: #2563eb; }
+.ppool-head-pill.green { background: #16a34a; }
+.ppool-head-pill.red { background: #dc2626; }
+.ppool-head-pill.slate { background: #64748b; }
+
+.ppool-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.ppool-row {
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  padding: 11px 14px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+  transition: border-color 0.15s ease;
+}
+
+.ppool-row.is-warn {
+  border-color: #fcd34d;
+  background: #fffdf5;
+}
+
+.ppool-row.is-over {
+  border-color: #fca5a5;
+  background: #fffafb;
+}
+
+.ppool-row-main {
+  display: grid;
+  grid-template-columns: 205px minmax(180px, 1.3fr) minmax(220px, 1.1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.ppool-col-target {
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.3;
+}
+.ppool-col-target.unset {
+  color: #475569;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.ppool-proj-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.ppool-proj-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+.ppool-col-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ppool-bar-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ppool-bar-track {
+  flex: 1;
+  height: 10px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ppool-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ppool-used-label {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0f172a;
+  min-width: 82px;
+  white-space: nowrap;
+}
+
+.ppool-rem-caption {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.ppool-edit-btn {
+  white-space: nowrap;
+  font-weight: 700 !important;
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.ppool-edit-btn:hover {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Rozwijany suwak i ręczne wpisywanie puli godzin */
+.ppool-editor-drawer {
+  margin-top: 11px;
+  padding-top: 11px;
+  border-top: 1px dashed #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ppool-editor-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 14px;
+}
+
+.ppool-editor-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.ppool-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ppool-range-slider {
+  flex: 1;
+  min-width: 120px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.ppool-num-input {
+  width: 92px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1.5px solid #93c5fd;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  text-align: center;
+}
+
+.ppool-unit {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #475569;
+}
+
+.ppool-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 960px) {
+  .ppool-row-main {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .ppool-editor-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .ppool-col-act {
+    display: flex;
+    justify-content: flex-end;
+  }
+}

@@ -337,6 +337,7 @@ const Hours = {
     }
     this.editingProjectName = null;
     this.refreshProjectSuggestions();
+    if (typeof ProjectPools !== 'undefined') ProjectPools.render();
     this.openProjectDropdown(true);
     toast(`Usunięto projekt „${trimmed}” z listy wyboru`);
   },
@@ -740,6 +741,9 @@ const Hours = {
       }
     }
 
+    // Zachowaj wyrobione dotąd godziny na pasku postępu projektów, aby kierownik dalej widział realny etap po resecie tabeli
+    Store.preserveProjectHoursBeforeReset();
+
     let totalRemoved = 0;
     Object.keys(Store.data).forEach(date => {
       const day = Store.get(date);
@@ -1084,6 +1088,7 @@ const Hours = {
         Store.ensureProject(newProj);
         if (projInput) projInput.value = newProj;
         this.refreshProjectSuggestions();
+        if (typeof ProjectPools !== 'undefined') ProjectPools.render();
         this.closeProjectDropdown();
         toast(`Dodano projekt „${newProj}” do listy`);
         return;

@@ -69,6 +69,9 @@ const App = {
 
   render() {
     Plan.render();
+    if (typeof ProjectPools !== 'undefined') {
+      ProjectPools.render();
+    }
     Calendar.render();
     Items.render();
     People.render();
@@ -87,6 +90,9 @@ const App = {
     Store.load();
     Auth.init();
     Plan.init();
+    if (typeof ProjectPools !== 'undefined') {
+      ProjectPools.init();
+    }
     Calendar.init();
     DayEditor.init();
     Menu.init();

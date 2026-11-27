@@ -81,10 +81,11 @@ const Store = {
         this.saveReminders();
       }
 
-      if (cloudProjects && (Array.isArray(cloudProjects.custom) || Array.isArray(cloudProjects.deleted))) {
+      if (cloudProjects && (Array.isArray(cloudProjects.custom) || Array.isArray(cloudProjects.deleted) || (cloudProjects.pools && typeof cloudProjects.pools === 'object'))) {
         this.projectsMeta = {
           custom: Array.isArray(cloudProjects.custom) ? cloudProjects.custom : [],
-          deleted: Array.isArray(cloudProjects.deleted) ? cloudProjects.deleted : []
+          deleted: Array.isArray(cloudProjects.deleted) ? cloudProjects.deleted : [],
+          pools: (cloudProjects.pools && typeof cloudProjects.pools === 'object') ? cloudProjects.pools : {}
         };
         localStorage.setItem(this.PROJECTS_KEY, JSON.stringify(this.projectsMeta));
       } else if (!cloudProjects && this.projectsMeta && firebase.auth && firebase.auth().currentUser) {
@@ -302,12 +303,13 @@ const Store = {
         const parsed = JSON.parse(raw);
         this.projectsMeta = {
           custom: Array.isArray(parsed?.custom) ? parsed.custom : [],
-          deleted: Array.isArray(parsed?.deleted) ? parsed.deleted : []
+          deleted: Array.isArray(parsed?.deleted) ? parsed.deleted : [],
+          pools: (parsed?.pools && typeof parsed.pools === 'object') ? parsed.pools : {}
         };
         return this.projectsMeta;
       }
     } catch (e) { console.error('Błąd odczytu projektów', e); }
-    this.projectsMeta = { custom: [], deleted: [] };
+    this.projectsMeta = { custom: [], deleted: [], pools: {} };
     if (!CLOUD_ENABLED) {
       this.saveProjects();
     }
@@ -399,8 +401,82 @@ const Store = {
     if (!alreadyDeleted) {
       this.projectsMeta.deleted.push(trimmed);
     }
+    if (this.projectsMeta.pools && this.projectsMeta.pools[lower]) {
+      delete this.projectsMeta.pools[lower];
+    }
     this.saveProjects();
     return true;
+  },
+
+  /** Pobiera ręcznie ustawioną pulę godzin RBH oraz godziny zachowane sprzed resetu dla projektu. */
+  getProjectPoolConfig(name) {
+    const lower = String(name || '').trim().toLowerCase();
+    if (!lower) return { poolRbh: 0, carriedRbh: 0 };
+    if (!this.projectsMeta) this.loadProjects();
+    if (!this.projectsMeta.pools) this.projectsMeta.pools = {};
+    const cfg = this.projectsMeta.pools[lower];
+    const fallbackPool = this.calendarNotes?.projectTasks?.[lower]?.poolRbh || 0;
+    return {
+      poolRbh: Math.max(0, Math.round((parseFloat(cfg?.poolRbh ?? fallbackPool) || 0) * 10) / 10),
+      carriedRbh: Math.max(0, Math.round((parseFloat(cfg?.carriedRbh) || 0) * 10) / 10)
+    };
+  },
+
+  /** Zapisuje ręcznie wprowadzoną pulę godzin (oraz opcjonalnie godziny sprzed resetu) w chmurze Firebase. */
+  setProjectPoolConfig(name, { poolRbh, carriedRbh }) {
+    const trimmed = String(name || '').trim();
+    const lower = trimmed.toLowerCase();
+    if (!lower) return false;
+    if (!this.projectsMeta) this.loadProjects();
+    if (!this.projectsMeta.pools) this.projectsMeta.pools = {};
+    const prev = this.getProjectPoolConfig(trimmed);
+    this.projectsMeta.pools[lower] = {
+      poolRbh: poolRbh !== undefined ? Math.max(0, Math.round((parseFloat(String(poolRbh).replace(',', '.')) || 0) * 10) / 10) : prev.poolRbh,
+      carriedRbh: carriedRbh !== undefined ? Math.max(0, Math.round((parseFloat(String(carriedRbh).replace(',', '.')) || 0) * 10) / 10) : prev.carriedRbh,
+      updatedAt: Date.now()
+    };
+    this.saveProjects();
+    return true;
+  },
+
+  /** Zlicza aktualnie wpisane godziny (RBH) w aplikacji dla wskazanego projektu. */
+  getProjectLiveHours(name) {
+    const lower = String(name || '').trim().toLowerCase();
+    if (!lower) return 0;
+    let sum = 0;
+    Object.values(this.data || {}).forEach(day => {
+      (day?.jobs || []).forEach(job => {
+        if (job.status === 'moved') return;
+        const proj = (job.place || 'Prace ogólne').trim().toLowerCase();
+        if (proj !== lower) return;
+        (job.people || []).forEach(p => {
+          sum += personHours(p).hours;
+        });
+      });
+    });
+    return Math.round(sum * 10) / 10;
+  },
+
+  /** Przed wyczyszczeniem tabeli godzin dopisuje wyrobione godziny do stanu bazowego projektów, aby pasek nie spadł do zera. */
+  preserveProjectHoursBeforeReset() {
+    if (!this.projectsMeta) this.loadProjects();
+    if (!this.projectsMeta.pools) this.projectsMeta.pools = {};
+    const activeProjects = this.getProjects();
+    let changed = false;
+    activeProjects.forEach(pName => {
+      const live = this.getProjectLiveHours(pName);
+      if (live > 0) {
+        const lower = pName.trim().toLowerCase();
+        const prev = this.getProjectPoolConfig(pName);
+        this.projectsMeta.pools[lower] = {
+          poolRbh: prev.poolRbh,
+          carriedRbh: Math.round((prev.carriedRbh + live) * 10) / 10,
+          updatedAt: Date.now()
+        };
+        changed = true;
+      }
+    });
+    if (changed) this.saveProjects();
   },
 
   /** Zmienia nazwę projektu na liście oraz aktualizuje istniejące wpisy z tą nazwą budowy. */
@@ -442,6 +518,13 @@ const Store = {
       }
     });
 
+    if (this.projectsMeta.pools && this.projectsMeta.pools[oldLower]) {
+      this.projectsMeta.pools[newLower] = {
+        ...this.projectsMeta.pools[oldLower],
+        updatedAt: Date.now()
+      };
+      if (oldLower !== newLower) delete this.projectsMeta.pools[oldLower];
+    }
     this.saveProjects();
 
     // Zaktualizuj też nazwę projektu w zadaniach i blokach Planu Tygodnia
@@ -1207,7 +1290,8 @@ const Store = {
       if (parsed.projectsMeta) {
         this.projectsMeta = {
           custom: Array.isArray(parsed.projectsMeta.custom) ? parsed.projectsMeta.custom : [],
-          deleted: Array.isArray(parsed.projectsMeta.deleted) ? parsed.projectsMeta.deleted : []
+          deleted: Array.isArray(parsed.projectsMeta.deleted) ? parsed.projectsMeta.deleted : [],
+          pools: (parsed.projectsMeta.pools && typeof parsed.projectsMeta.pools === 'object') ? parsed.projectsMeta.pools : {}
         };
         this.saveProjects();
       }
